@@ -1,0 +1,110 @@
+version: "3.9"
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: shf_mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: shf_admin
+      MONGO_INITDB_ROOT_PASSWORD: secure_institutional_password
+      MONGO_INITDB_DATABASE: hedge_fund_db
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - shf_network
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: shf_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass secure_redis_password
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "secure_redis_password", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - shf_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: shf_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - MONGODB_URI=mongodb://shf_admin:secure_institutional_password@mongodb:27017/hedge_fund_db?authSource=admin
+      - REDIS_URL=redis://:secure_redis_password@redis:6379/0
+      - GEMINI_API_KEYS=${GEMINI_API_KEYS:-AIzaSyDemoKey1,AIzaSyDemoKey2}
+      - FINNHUB_API_KEY=${FINNHUB_API_KEY:-}
+      - ALPHA_VANTAGE_API_KEY=${ALPHA_VANTAGE_API_KEY:-}
+      - NEWS_API_KEY=${NEWS_API_KEY:-}
+      - FMP_API_KEY=${FMP_API_KEY:-}
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+    networks:
+      - shf_network
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: shf_celery_worker
+    restart: always
+    command: ["celery", "-A", "celery_app.celery_app", "worker", "--loglevel=info", "--concurrency=4"]
+    environment:
+      - APP_ENV=production
+      - MONGODB_URI=mongodb://shf_admin:secure_institutional_password@mongodb:27017/hedge_fund_db?authSource=admin
+      - REDIS_URL=redis://:secure_redis_password@redis:6379/0
+      - GEMINI_API_KEYS=${GEMINI_API_KEYS:-AIzaSyDemoKey1,AIzaSyDemoKey2}
+      - FINNHUB_API_KEY=${FINNHUB_API_KEY:-}
+      - ALPHA_VANTAGE_API_KEY=${ALPHA_VANTAGE_API_KEY:-}
+      - NEWS_API_KEY=${NEWS_API_KEY:-}
+      - FMP_API_KEY=${FMP_API_KEY:-}
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+    networks:
+      - shf_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: shf_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - shf_network
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+networks:
+  shf_network:
+    driver: bridge
