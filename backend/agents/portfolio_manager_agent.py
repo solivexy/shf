@@ -29,6 +29,7 @@ async def portfolio_manager_agent_node(state: HedgeFundState) -> HedgeFundState:
     o_data = state.get("options_flow")
     r_data = state.get("risk_manager")
     ml_data = state.get("ml_prediction")
+    h_data = state.get("historical_regime")
 
     # 1. Compute deterministic weighted institutional confluence score (0..100)
     # Weights: Market 15%, News 20%, Tech 30%, Macro 15%, Options 20%
@@ -65,17 +66,31 @@ async def portfolio_manager_agent_node(state: HedgeFundState) -> HedgeFundState:
 
     # Determine baseline decision rule
     if weighted_score >= 76.0:
-        base_decision = "Strong Buy"
+        decision_owned = "Hold"
+        decision_not_owned = "Strong Buy"
     elif weighted_score >= 62.0:
-        base_decision = "Buy"
+        decision_owned = "Hold"
+        decision_not_owned = "Buy"
     elif weighted_score <= 28.0:
-        base_decision = "Strong Sell"
+        decision_owned = "Strong Sell"
+        decision_not_owned = "Wait / Do Not Buy"
     elif weighted_score <= 42.0:
-        base_decision = "Sell"
+        decision_owned = "Sell"
+        decision_not_owned = "Wait / Do Not Buy"
     elif weighted_score >= 54.0:
-        base_decision = "Hold"
+        decision_owned = "Hold"
+        decision_not_owned = "Wait / Do Not Buy"
     else:
-        base_decision = "Reduce"
+        decision_owned = "Reduce"
+        decision_not_owned = "Wait / Do Not Buy"
+
+    vol_regime = h_data.volatility_regime.lower() if h_data else "normal"
+    if "high" in vol_regime or "expansion" in vol_regime:
+        dyn_horizon = "1 Week"
+    elif "low" in vol_regime or "compression" in vol_regime:
+        dyn_horizon = "3 to 6 Months"
+    else:
+        dyn_horizon = "1 Month"
 
     # Position size limit from risk manager
     max_pos = r_data.max_position_size_limit if r_data else "5% of Portfolio"
@@ -116,17 +131,19 @@ Evaluate the comprehensive multi-agent intelligence dossier below:
    - Upward Return Probability: {ml_data.probability_up * 100 if ml_data else 55.0:.1f}% ({ml_data.predicted_direction if ml_data else 'UP'})
    - Expected Horizon Return: {ml_data.expected_return_percent:+g}% if ml_data else '+3.5%'
 
-Weighted Multi-Agent Confluence Score: {weighted_score} / 100 -> Baseline Target: {base_decision}
+Weighted Multi-Agent Confluence Score: {weighted_score} / 100
 
 Synthesize these inputs, explicitly resolve any conflicting signals (e.g. bullish technicals vs macro headwinds), and output the FINAL institutional recommendation.
+Because portfolio recommendation logic must account for user asset ownership, you must output two decisions: one assuming the user already owns the asset, and one assuming they do not.
 Return a valid JSON object strictly adhering to this exact schema:
 {{
   "ticker": "{ticker}",
-  "decision": "Strong Buy" | "Buy" | "Hold" | "Reduce" | "Sell" | "Strong Sell",
+  "decision_owned": "Hold" | "Reduce" | "Sell" | "Strong Sell",
+  "decision_not_owned": "Strong Buy" | "Buy" | "Wait / Do Not Buy",
   "confidence": int or float between 0 and 100,
   "position_size": string such as "{max_pos.split(' ')[0]}",
   "risk": "{risk_cat}",
-  "investment_horizon": "Dynamic duration (e.g. '1 Week', '1 Month', '6 Months', '1 Year') determined by trend stability and macro outlook",
+  "investment_horizon": "Duration bounded by Volatility (e.g. {dyn_horizon})",
   "bullish_reasons": ["Top 3-4 concrete bullish arguments with exact numerical evidence"],
   "bearish_reasons": ["Top 2-3 key risk factors or bearish counterpoints"],
   "summary": "Comprehensive 3-4 sentence CIO synthesis detailing exactly why this recommendation was reached."
@@ -145,14 +162,15 @@ Return a valid JSON object strictly adhering to this exact schema:
 
     fallback_json = {
         "ticker": ticker,
-        "decision": base_decision,
-        "confidence": round(min(98.0, max(60.0, weighted_score if base_decision in ["Buy", "Strong Buy"] else (100.0 - weighted_score))), 1),
+        "decision_owned": decision_owned,
+        "decision_not_owned": decision_not_owned,
+        "confidence": round(min(98.0, max(60.0, weighted_score if "Buy" in decision_not_owned else (100.0 - weighted_score))), 1),
         "position_size": max_pos.split(' ')[0] if ' ' in max_pos else "5%",
         "risk": risk_cat,
-        "investment_horizon": "1 Week" if abs(weighted_score - 50) > 30 else "1 Month" if abs(weighted_score - 50) > 15 else "6 Months",
+        "investment_horizon": dyn_horizon,
         "bullish_reasons": fallback_reasons_bull,
         "bearish_reasons": fallback_reasons_bear,
-        "summary": f"The Portfolio Manager synthesizes a weighted confluence score of {weighted_score}/100, determining a '{base_decision}' allocation. Institutional options flow and technical pattern breakout alignment outweigh moderate macroeconomic interest rate headwinds, supporting a targeted {max_pos.split(' ')[0] if ' ' in max_pos else '5%'} position within strict risk boundaries."
+        "summary": f"The Portfolio Manager synthesizes a weighted confluence score of {weighted_score}/100, determining a '{decision_not_owned}' non-owned allocation. Institutional options flow and technical pattern breakout alignment outweigh moderate macroeconomic interest rate headwinds, supporting a targeted {max_pos.split(' ')[0] if ' ' in max_pos else '5%'} position within strict risk boundaries."
     }
 
     result = await api_key_manager.invoke_gemini(
@@ -162,16 +180,17 @@ Return a valid JSON object strictly adhering to this exact schema:
         fallback_json=fallback_json
     )
 
-    if not isinstance(result, dict) or "decision" not in result:
+    if not isinstance(result, dict) or "decision_owned" not in result:
         result = fallback_json
 
     output = PortfolioManagerOutput(
         ticker=ticker,
-        decision=result.get("decision", base_decision),
+        decision_owned=result.get("decision_owned", decision_owned),
+        decision_not_owned=result.get("decision_not_owned", decision_not_owned),
         confidence=float(result.get("confidence", fallback_json["confidence"])),
         position_size=str(result.get("position_size", fallback_json["position_size"])),
         risk=str(result.get("risk", risk_cat)),
-        investment_horizon=str(result.get("investment_horizon", fallback_json["investment_horizon"])),
+        investment_horizon=str(result.get("investment_horizon", dyn_horizon)),
         bullish_reasons=result.get("bullish_reasons", fallback_reasons_bull),
         bearish_reasons=result.get("bearish_reasons", fallback_reasons_bear),
         summary=result.get("summary", fallback_json["summary"])
@@ -184,7 +203,7 @@ Return a valid JSON object strictly adhering to this exact schema:
         "COMPLETED",
         runtime_ms=(time.time() - start_time) * 1000,
         confidence=output.confidence,
-        summary=f"Final Decision: {output.decision.upper()} (Confidence: {output.confidence}%, Size: {output.position_size}, Risk: {output.risk}).",
+        summary=f"Final Decision -> Owned: {output.decision_owned.upper()}, Not Owned: {output.decision_not_owned.upper()} (Confidence: {output.confidence}%, Size: {output.position_size}, Horizon: {output.investment_horizon}).",
         reasoning=output.summary,
         output_json=output
     )
