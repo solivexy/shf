@@ -126,7 +126,7 @@ Return a valid JSON object strictly adhering to this exact schema:
   "confidence": int or float between 0 and 100,
   "position_size": string such as "{max_pos.split(' ')[0]}",
   "risk": "{risk_cat}",
-  "investment_horizon": "3 Months" | "6 Months" | "1 Year",
+  "investment_horizon": "Dynamic duration (e.g. '1 Week', '1 Month', '6 Months', '1 Year') determined by trend stability and macro outlook",
   "bullish_reasons": ["Top 3-4 concrete bullish arguments with exact numerical evidence"],
   "bearish_reasons": ["Top 2-3 key risk factors or bearish counterpoints"],
   "summary": "Comprehensive 3-4 sentence CIO synthesis detailing exactly why this recommendation was reached."
@@ -149,7 +149,7 @@ Return a valid JSON object strictly adhering to this exact schema:
         "confidence": round(min(98.0, max(60.0, weighted_score if base_decision in ["Buy", "Strong Buy"] else (100.0 - weighted_score))), 1),
         "position_size": max_pos.split(' ')[0] if ' ' in max_pos else "5%",
         "risk": risk_cat,
-        "investment_horizon": "3 Months",
+        "investment_horizon": "1 Week" if abs(weighted_score - 50) > 30 else "1 Month" if abs(weighted_score - 50) > 15 else "6 Months",
         "bullish_reasons": fallback_reasons_bull,
         "bearish_reasons": fallback_reasons_bear,
         "summary": f"The Portfolio Manager synthesizes a weighted confluence score of {weighted_score}/100, determining a '{base_decision}' allocation. Institutional options flow and technical pattern breakout alignment outweigh moderate macroeconomic interest rate headwinds, supporting a targeted {max_pos.split(' ')[0] if ' ' in max_pos else '5%'} position within strict risk boundaries."
@@ -171,7 +171,7 @@ Return a valid JSON object strictly adhering to this exact schema:
         confidence=float(result.get("confidence", fallback_json["confidence"])),
         position_size=str(result.get("position_size", fallback_json["position_size"])),
         risk=str(result.get("risk", risk_cat)),
-        investment_horizon=str(result.get("investment_horizon", "3 Months")),
+        investment_horizon=str(result.get("investment_horizon", fallback_json["investment_horizon"])),
         bullish_reasons=result.get("bullish_reasons", fallback_reasons_bull),
         bearish_reasons=result.get("bearish_reasons", fallback_reasons_bear),
         summary=result.get("summary", fallback_json["summary"])

@@ -165,6 +165,7 @@ Setiap agen memiliki tanggung jawab kuantitatif yang terisolasi secara modular, 
 * **Output Kuantitatif**:
   * **Skor Konfluensi Master**: Nilai kuantitatif gabungan dari rentang `0 hingga 100`.
   * **Mandat Investasi Institusional**: **`STRONG BUY`**, **`BUY`**, **`HOLD`**, **`SELL`**, atau **`STRONG SELL`**.
+  * **Cakupan Waktu Investasi (Investment Horizon)**: Ditentukan secara dinamis berdasarkan mesin kuantitatif luring (*offline fallback engine*) menggunakan selisih ekstrimitas dari Skor Konfluensi atau secara analitis oleh Agen AI Gemini. Horizon yang direkomendasikan adalah `1 Week`, `1 Month`, atau `6 Months` hingga `1 Year`.
   * **Target Harga Cakupan 12 Bulan (`USD`)**.
   * **Tesis Bullish vs Bearish**: Penjelasan rasional kuantitatif dan fundamental yang mendasari rekomendasi.
 

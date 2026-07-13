@@ -55,7 +55,7 @@ export default function CIORecommendationCard({ portfolioManager, executionPlan 
 
         <div className="p-3 flex flex-col justify-center col-span-2 md:col-span-1">
           <span className="text-[#787b86] text-[10px] uppercase">Investment Horizon</span>
-          <span className="font-bold text-sm text-[#d1d4dc] mt-1">{portfolioManager.investment_horizon || "3 Months"}</span>
+          <span className="font-bold text-sm text-[#d1d4dc] mt-1">{portfolioManager.investment_horizon || "Dynamic"}</span>
         </div>
       </div>
 

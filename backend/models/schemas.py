@@ -110,7 +110,7 @@ class PortfolioManagerOutput(BaseModel):
     confidence: float = 50.0
     position_size: str = "0%"
     risk: str = "Medium"
-    investment_horizon: str = "3 Months"
+    investment_horizon: str = "Dynamic"
     bullish_reasons: List[str] = Field(default_factory=list)
     bearish_reasons: List[str] = Field(default_factory=list)
     summary: str = ""
