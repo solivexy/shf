@@ -121,20 +121,23 @@ class ReportService:
             story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor('#2962ff'), spaceAfter=12))
 
             # Recommendation Badge Table
-            decision = getattr(pm, 'decision', 'HOLD') or 'HOLD'
-            decision = str(decision).upper()
+            dec_own = getattr(pm, 'decision_owned', 'HOLD') or 'HOLD'
+            dec_not = getattr(pm, 'decision_not_owned', 'WAIT') or 'WAIT'
+            dec_own = str(dec_own).upper()
+            dec_not = str(dec_not).upper()
             conf = getattr(pm, 'confidence', 85.0) or 85.0
             pos = getattr(pm, 'position_size', '10.0%') or '10.0%'
             risk = getattr(pm, 'risk', 'Medium') or 'Medium'
             risk = str(risk).upper()
 
-            badge_color = colors.HexColor('#089981') if decision in ["BUY", "STRONG BUY"] else (colors.HexColor('#f23645') if decision in ["SELL", "STRONG SELL"] else colors.HexColor('#f59e0b'))
+            b_color_own = colors.HexColor('#089981') if dec_own in ["BUY", "STRONG BUY"] else (colors.HexColor('#f23645') if dec_own in ["SELL", "STRONG SELL"] else colors.HexColor('#f59e0b'))
+            b_color_not = colors.HexColor('#089981') if dec_not in ["BUY", "STRONG BUY"] else (colors.HexColor('#f23645') if dec_not in ["SELL", "STRONG SELL", "WAIT", "WAIT / DO NOT BUY"] else colors.HexColor('#f59e0b'))
 
             rec_data = [
-                [Paragraph("<b>CIO RECOMMENDATION</b>", cell_bold), Paragraph("<b>QUANT CONFIDENCE</b>", cell_bold), Paragraph("<b>KELLY ALLOCATION</b>", cell_bold), Paragraph("<b>RISK CLASSIFICATION</b>", cell_bold)],
-                [Paragraph(f"<font color='{badge_color.hexval()}' size=12><b>{decision}</b></font>", cell_style), Paragraph(f"<b>{conf}%</b>", cell_style), Paragraph(f"<b>{pos}</b>", cell_style), Paragraph(f"<b>{risk}</b>", cell_style)]
+                [Paragraph("<b>ACTION (IF OWNED)</b>", cell_bold), Paragraph("<b>ACTION (NOT OWNED)</b>", cell_bold), Paragraph("<b>QUANT CONFIDENCE</b>", cell_bold), Paragraph("<b>KELLY ALLOCATION</b>", cell_bold)],
+                [Paragraph(f"<font color='{b_color_own.hexval()}' size=11><b>{dec_own}</b></font>", cell_style), Paragraph(f"<font color='{b_color_not.hexval()}' size=11><b>{dec_not}</b></font>", cell_style), Paragraph(f"<b>{conf}%</b>", cell_style), Paragraph(f"<b>{pos}</b>", cell_style)]
             ]
-            t_rec = Table(rec_data, colWidths=[2.1*inch, 1.5*inch, 1.6*inch, 1.8*inch])
+            t_rec = Table(rec_data, colWidths=[1.8*inch, 1.8*inch, 1.7*inch, 1.7*inch])
             t_rec.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8fafc')),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -289,20 +292,21 @@ class ReportService:
 
         except Exception as e:
             logger.error(f"ReportLab PDF generation failed: {e}. Returning fallback buffer.")
-            return f"Institutional Research Report: {ticker}\nDecision: {pm.decision if pm else 'Hold'}\nSummary: {pm.summary if pm else ''}".encode('utf-8')
+            return f"Institutional Research Report: {ticker}\nDecision (Not Owned): {pm.decision_not_owned if pm else 'Wait'}\nSummary: {pm.summary if pm else ''}".encode('utf-8')
 
     def generate_csv_export(self, run_result: AnalysisRunResult) -> str:
         buffer = io.StringIO()
         writer = csv.writer(buffer)
         
         # Header
-        writer.writerow(["Task ID", "Ticker", "Status", "Decision", "Confidence", "Position Size", "Risk Level", "Created At"])
+        writer.writerow(["Task ID", "Ticker", "Status", "Decision (Owned)", "Decision (Not Owned)", "Confidence", "Position Size", "Risk Level", "Created At"])
         pm = run_result.portfolio_manager
         writer.writerow([
             run_result.task_id,
             run_result.ticker,
             run_result.status,
-            pm.decision if pm else "N/A",
+            pm.decision_owned if pm else "N/A",
+            pm.decision_not_owned if pm else "N/A",
             pm.confidence if pm else "N/A",
             pm.position_size if pm else "N/A",
             pm.risk if pm else "N/A",

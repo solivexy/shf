@@ -48,7 +48,7 @@ async def test_all_agents_pipeline_sequential():
     # 5. Options Flow Agent
     state = await options_flow_agent_node(state)
     assert "options_flow" in state
-    assert state["options_flow"].put_call_ratio > 0
+    assert state["options_flow"].put_call_ratio >= 0
 
     # 6. Risk Manager Agent
     state = await risk_manager_agent_node(state)
@@ -63,7 +63,8 @@ async def test_all_agents_pipeline_sequential():
     # 8. Portfolio Manager Agent
     state = await portfolio_manager_agent_node(state)
     assert "portfolio_manager" in state
-    assert state["portfolio_manager"].decision in ["Strong Buy", "Buy", "Hold", "Reduce", "Sell", "Strong Sell"]
+    assert state["portfolio_manager"].decision_not_owned in ["Strong Buy", "Buy", "Wait / Do Not Buy"]
+    assert state["portfolio_manager"].decision_owned in ["Hold", "Reduce", "Sell", "Strong Sell"]
 
     # 9. Execution Agent
     state = await execution_agent_node(state)

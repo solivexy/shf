@@ -18,7 +18,7 @@ class MongoDBManager:
         self._db = None
         self._mongo_available = False
         self._memory_runs: Dict[str, Dict[str, Any]] = self._build_benchmark_runs()
-        self._memory_watchlists: Dict[str, List[str]] = {"default": ["AAPL", "NVDA", "TSLA", "MSFT", "AMZN"]}
+        self._memory_watchlists: Dict[str, List[str]] = {"default": ["AAPL", "NVDA", "TSLA", "MSFT", "AMZN", "BBRI.JK", "BMRI.JK"]}
         self._lock = asyncio.Lock()
 
     def _build_benchmark_runs(self) -> Dict[str, Dict[str, Any]]:

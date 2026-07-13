@@ -106,7 +106,8 @@ class MLPredictionOutput(BaseModel):
 
 class PortfolioManagerOutput(BaseModel):
     ticker: str
-    decision: str = "Hold"  # Strong Buy, Buy, Hold, Reduce, Sell, Strong Sell
+    decision_owned: str = "Hold"  # Hold, Reduce, Sell, Strong Sell
+    decision_not_owned: str = "Wait"  # Strong Buy, Buy, Wait / Do Not Buy
     confidence: float = 50.0
     position_size: str = "0%"
     risk: str = "Medium"

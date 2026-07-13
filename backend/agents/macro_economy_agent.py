@@ -22,18 +22,31 @@ async def macro_economy_agent_node(state: HedgeFundState) -> HedgeFundState:
     logger.info(f"Macro Economy Agent running for ticker: {ticker}")
 
     # Quantitative intake of key macroeconomic variables
-    macro_indicators = {
-        "fed_funds_rate": "5.25% - 5.50% (Terminal / Hold)",
-        "cpi_inflation_yoy": "2.8% (Trending down toward 2% target)",
-        "gdp_growth_annualized": "2.6% (Resilient US economic expansion)",
-        "treasury_yield_10y": "4.28%",
-        "treasury_yield_2y": "4.65%",
-        "yield_curve_2y_10y_spread": "-37 bps (Inverted / Normalizing)",
-        "oil_wti_crude": "$78.40 / bbl",
-        "gold_spot": "$2,410.00 / oz (Strong central bank demand)",
-        "dollar_index_dxy": "104.2 (Stable institutional dollar strength)",
-        "unemployment_rate": "4.1% (Healthy labor market equilibrium)"
-    }
+    if ticker.endswith(".JK"):
+        macro_indicators = {
+            "bi_7_day_repo_rate": "6.25% (Hold / Restrictive)",
+            "cpi_inflation_yoy": "2.8% (Within BI Target 1.5% - 3.5%)",
+            "gdp_growth_annualized": "5.11% (Robust domestic consumption)",
+            "indonesia_10y_yield": "6.95%",
+            "usd_idr_exchange_rate": "Rp 16,250 (Depreciation pressure)",
+            "oil_wti_crude": "$78.40 / bbl",
+            "gold_spot": "$2,410.00 / oz (Strong central bank demand)",
+            "dollar_index_dxy": "104.2 (Stable institutional dollar strength)",
+            "unemployment_rate": "4.8% (Healthy labor market equilibrium)"
+        }
+    else:
+        macro_indicators = {
+            "fed_funds_rate": "5.25% - 5.50% (Terminal / Hold)",
+            "cpi_inflation_yoy": "2.8% (Trending down toward 2% target)",
+            "gdp_growth_annualized": "2.6% (Resilient US economic expansion)",
+            "treasury_yield_10y": "4.28%",
+            "treasury_yield_2y": "4.65%",
+            "yield_curve_2y_10y_spread": "-37 bps (Inverted / Normalizing)",
+            "oil_wti_crude": "$78.40 / bbl",
+            "gold_spot": "$2,410.00 / oz (Strong central bank demand)",
+            "dollar_index_dxy": "104.2 (Stable institutional dollar strength)",
+            "unemployment_rate": "4.1% (Healthy labor market equilibrium)"
+        }
 
     prompt = f"""
 Evaluate the current global macroeconomic climate for equity investment, specifically regarding technology & growth equities such as {ticker}.
@@ -50,11 +63,18 @@ Return a valid JSON object matching this exact schema:
 }}
 """
 
-    fallback_json = {
-        "macro_score": 28.5,
-        "risk_score": 42.0,
-        "economic_outlook": "The global macroeconomic backdrop remains moderately supportive for high-quality corporate balance sheets. While the Federal Reserve maintains a restrictive stance at 5.25%-5.50%, moderating YoY CPI inflation (2.8%) and resilient GDP growth (2.6%) point toward a soft-landing scenario. Elevated 10Y Treasury yields (4.28%) command valuation discipline, yet strong secular earnings visibility in technology and industrial sectors continues to drive constructive institutional capital inflows."
-    }
+    if ticker.endswith(".JK"):
+        fallback_json = {
+            "macro_score": 35.0,
+            "risk_score": 45.0,
+            "economic_outlook": "The Indonesian macroeconomic environment remains resilient, driven by robust 5.11% GDP growth and manageable 2.8% inflation. However, Bank Indonesia maintains a restrictive 6.25% BI Rate to defend the Rupiah against ongoing USD strength (Rp 16,250). Elevated 10Y Indo government yields (6.95%) require careful valuation screening, though domestic consumption sectors continue to show fundamental strength."
+        }
+    else:
+        fallback_json = {
+            "macro_score": 28.5,
+            "risk_score": 42.0,
+            "economic_outlook": "The global macroeconomic backdrop remains moderately supportive for high-quality corporate balance sheets. While the Federal Reserve maintains a restrictive stance at 5.25%-5.50%, moderating YoY CPI inflation (2.8%) and resilient GDP growth (2.6%) point toward a soft-landing scenario. Elevated 10Y Treasury yields (4.28%) command valuation discipline, yet strong secular earnings visibility in technology and industrial sectors continues to drive constructive institutional capital inflows."
+        }
 
     result = await api_key_manager.invoke_gemini(
         prompt=prompt,

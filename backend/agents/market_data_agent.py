@@ -199,8 +199,8 @@ def _get_synthetic_fallback(ticker: str) -> tuple[MarketDataOutput, pd.DataFrame
         elif stock.info and stock.info.get("regularMarketPrice"):
             start_price = float(stock.info.get("regularMarketPrice"))
     except Exception:
-        base_prices = {"AAPL": 226.50, "NVDA": 134.20, "TSLA": 252.80, "MSFT": 448.30, "AMZN": 196.40, "SPCX": 148.73}
-        start_price = base_prices.get(ticker, 150.0)
+        base_prices = {"AAPL": 226.50, "NVDA": 134.20, "TSLA": 252.80, "MSFT": 448.30, "AMZN": 196.40, "SPCX": 148.73, "BBRI.JK": 4800.0, "BMRI.JK": 6500.0}
+        start_price = base_prices.get(ticker, 150.0 if not ticker.endswith(".JK") else 5000.0)
 
     # Seed random with ticker string for deterministic synthetic trajectory
     seed = sum(ord(c) for c in ticker) + 2026
@@ -237,7 +237,9 @@ def _get_synthetic_fallback(ticker: str) -> tuple[MarketDataOutput, pd.DataFrame
         "TSLA": "Tesla, Inc.",
         "MSFT": "Microsoft Corporation",
         "AMZN": "Amazon.com, Inc.",
-        "SPCX": "Defiance Daily Target 2x Long SpaceX ETF"
+        "SPCX": "Defiance Daily Target 2x Long SpaceX ETF",
+        "BBRI.JK": "Bank Rakyat Indonesia (Persero) Tbk",
+        "BMRI.JK": "Bank Mandiri (Persero) Tbk"
     }
     sectors = {
         "AAPL": "Technology",
@@ -245,7 +247,9 @@ def _get_synthetic_fallback(ticker: str) -> tuple[MarketDataOutput, pd.DataFrame
         "TSLA": "Automotive & Clean Energy",
         "MSFT": "Software & Cloud Services",
         "AMZN": "E-Commerce & Cloud Infrastructure",
-        "SPCX": "Aerospace & Space Technology"
+        "SPCX": "Aerospace & Space Technology",
+        "BBRI.JK": "Banking & Financial Services",
+        "BMRI.JK": "Banking & Financial Services"
     }
 
     bars = []
