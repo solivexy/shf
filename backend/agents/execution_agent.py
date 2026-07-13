@@ -25,7 +25,7 @@ async def execution_agent_node(state: HedgeFundState) -> HedgeFundState:
     pm_data = state.get("portfolio_manager")
 
     current_price = m_data.current_price if m_data else 150.0
-    decision = pm_data.decision if pm_data else "Hold"
+    decision = pm_data.decision_not_owned if pm_data else "Hold"
 
     # Compute entry price & ideal buy zone
     if decision in ["Buy", "Strong Buy"]:
