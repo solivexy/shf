@@ -95,6 +95,8 @@ async def portfolio_manager_agent_node(state: HedgeFundState) -> HedgeFundState:
     # Position size limit from risk manager
     max_pos = r_data.max_position_size_limit if r_data else "5% of Portfolio"
     risk_cat = r_data.risk_category if r_data else "Medium"
+    
+    curr = "IDR " if ticker.endswith(".JK") else "$"
 
     prompt = f"""
 You are the Chief Investment Officer (CIO) and Portfolio Manager of an autonomous quantitative hedge fund.
@@ -102,9 +104,9 @@ You are the ONLY agent permitted to generate the final investment decision for {
 Evaluate the comprehensive multi-agent intelligence dossier below:
 
 1. Market Data (Weight 15% - Normalized Score: {market_val:.1f}):
-   - Price: ${m_data.current_price if m_data else 150.0} ({m_data.daily_change_percent:+g}% today)
+   - Price: {curr}{m_data.current_price if m_data else 150.0} ({m_data.daily_change_percent:+g}% today)
    - Sector: {m_data.sector if m_data else 'Technology'}, Industry: {m_data.industry if m_data else 'Large Cap'}
-   - Fundamentals: Market Cap ${m_data.market_cap / 1e9 if m_data else 1500:.1f}B
+   - Fundamentals: Market Cap {curr}{m_data.market_cap / 1e9 if m_data else 1500:.1f}B
 
 2. News Intelligence (Weight 20% - Normalized Score: {news_val:.1f}):
    - Sentiment: {n_data.sentiment if n_data else 'Neutral'} (Raw Score: {news_raw:+g})
@@ -121,7 +123,7 @@ Evaluate the comprehensive multi-agent intelligence dossier below:
 
 5. Options Flow (Weight 20% - Score: {options_val:.1f}):
    - Institutional Skew: {options_sent}
-   - Put/Call Ratio: {o_data.put_call_ratio if o_data else 1.0}, Max Pain Strike: ${o_data.max_pain_strike if o_data else 150.0}
+   - Put/Call Ratio: {o_data.put_call_ratio if o_data else 1.0}, Max Pain Strike: {curr}{o_data.max_pain_strike if o_data else 150.0}
 
 6. Risk Manager Assessment:
    - Sharpe Ratio: {r_data.sharpe_ratio if r_data else 1.5}, Max Drawdown: {r_data.max_drawdown_percent if r_data else -15.0}%
@@ -153,7 +155,7 @@ Return a valid JSON object strictly adhering to this exact schema:
     fallback_reasons_bull = [
         f"Weighted multi-agent quantitative confluence score stands at {weighted_score}/100, exceeding institutional hurdle.",
         f"Technical indicators confirm {t_data.trend_status if t_data else 'bullish momentum'} with RSI_14 at {t_data.indicators.get('rsi_14', 58.0) if t_data else 58.0}.",
-        f"Options flow displays {options_sent} with Max Pain centered at ${o_data.max_pain_strike if o_data else round((m_data.current_price if m_data else 150) * 1.02, 2)}."
+        f"Options flow displays {options_sent} with Max Pain centered at {curr}{o_data.max_pain_strike if o_data else round((m_data.current_price if m_data else 150) * 1.02, 2)}."
     ]
     fallback_reasons_bear = [
         f"Macroeconomic interest rate environment commands ongoing valuation vigilance.",

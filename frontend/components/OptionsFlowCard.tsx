@@ -5,9 +5,10 @@ import { Layers } from "lucide-react";
 
 interface Props {
   optionsFlow?: any;
+  ticker?: string;
 }
 
-export default function OptionsFlowCard({ optionsFlow }: Props) {
+export default function OptionsFlowCard({ optionsFlow, ticker = "AAPL" }: Props) {
   if (!optionsFlow) {
     return (
       <div className="bg-[#1e222d] border border-[#2a2e39] p-4 text-center text-[#787b86] text-xs font-mono">
@@ -17,7 +18,8 @@ export default function OptionsFlowCard({ optionsFlow }: Props) {
   }
 
   const pcr = optionsFlow.put_call_ratio !== undefined ? Number(optionsFlow.put_call_ratio).toFixed(2) : "0.74";
-  const maxPain = optionsFlow.max_pain || "$152.00";
+  const curr = ticker.toUpperCase().endsWith(".JK") ? "IDR " : "$";
+  const maxPain = optionsFlow.max_pain || `${curr}152.00`;
   const sentiment = optionsFlow.sentiment || (Number(pcr) < 0.85 ? "Bullish Institutional Call Flow" : "Bearish Institutional Put Protection");
 
   return (

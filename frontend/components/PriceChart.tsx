@@ -141,6 +141,7 @@ export default function PriceChart({ ticker, currentPrice, marketData }: Props) 
   }, [ticker, currentPrice, timeframe, marketData]);
 
   const priceFormatted = currentPrice ? currentPrice.toFixed(2) : "0.00";
+  const curr = ticker.toUpperCase().endsWith(".JK") ? "IDR " : "$";
 
   return (
     <div className="bg-[#1e222d] border border-[#2a2e39] font-mono select-none flex flex-col">
@@ -148,7 +149,7 @@ export default function PriceChart({ ticker, currentPrice, marketData }: Props) 
       <div className="flex items-center justify-between px-3 py-2 border-b border-[#2a2e39] bg-[#131722] text-xs">
         <div className="flex items-center space-x-3">
           <span className="font-bold text-[#d1d4dc] text-sm tracking-tight">SYMBOL:{ticker}</span>
-          <span className="text-[#089981] font-bold text-sm">${priceFormatted}</span>
+          <span className="text-[#089981] font-bold text-sm">{curr}{priceFormatted}</span>
           <span className="text-[#787b86] text-[11px] hidden sm:inline">REAL-TIME OHLCV STREAM</span>
         </div>
 
@@ -179,13 +180,13 @@ export default function PriceChart({ ticker, currentPrice, marketData }: Props) 
           {marketData ? (
             <>
               <span>VOL: <strong className="text-[#d1d4dc]">{marketData.volume ? (marketData.volume / 1e6).toFixed(2) + "M" : "42.8M"}</strong></span>
-              <span>52W HI: <strong className="text-[#089981]">${marketData.ohlcv_summary?.["52_week_high"] || (currentPrice * 1.15).toFixed(2)}</strong></span>
-              <span>52W LO: <strong className="text-[#f23645]">${marketData.ohlcv_summary?.["52_week_low"] || (currentPrice * 0.85).toFixed(2)}</strong></span>
+              <span>52W HI: <strong className="text-[#089981]">{curr}{marketData.ohlcv_summary?.["52_week_high"] || (currentPrice * 1.15).toFixed(2)}</strong></span>
+              <span>52W LO: <strong className="text-[#f23645]">{curr}{marketData.ohlcv_summary?.["52_week_low"] || (currentPrice * 0.85).toFixed(2)}</strong></span>
             </>
           ) : (
             <>
               <span>VOL: <strong className="text-[#d1d4dc]">--</strong></span>
-              <span>VWAP: <strong className="text-[#d1d4dc]">${(currentPrice * 0.998).toFixed(2)}</strong></span>
+              <span>VWAP: <strong className="text-[#d1d4dc]">{curr}{(currentPrice * 0.998).toFixed(2)}</strong></span>
             </>
           )}
         </div>

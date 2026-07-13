@@ -42,13 +42,14 @@ async def options_flow_agent_node(state: HedgeFundState) -> HedgeFundState:
     )
 
     state["options_flow"] = output
+    curr = "IDR " if ticker.endswith(".JK") else "$"
     emit_timeline_log(
         state,
         "Options Flow Agent",
         "COMPLETED",
         runtime_ms=(time.time() - start_time) * 1000,
         confidence=output.confidence,
-        summary=f"P/C Ratio: {output.put_call_ratio}, Max Pain: ${output.max_pain_strike}, IV Rank: {output.iv_rank} ({output.institutional_sentiment}).",
+        summary=f"P/C Ratio: {output.put_call_ratio}, Max Pain: {curr}{output.max_pain_strike}, IV Rank: {output.iv_rank} ({output.institutional_sentiment}).",
         reasoning=output.unusual_activity_summary,
         output_json=output
     )

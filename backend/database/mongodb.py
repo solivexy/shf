@@ -293,7 +293,7 @@ class MongoDBManager:
         settings = get_settings()
         try:
             from motor.motor_asyncio import AsyncIOMotorClient
-            self._client = AsyncIOMotorClient(settings.MONGODB_URL, serverSelectionTimeoutMS=2000)
+            self._client = AsyncIOMotorClient(settings.MONGODB_URI, serverSelectionTimeoutMS=2000)
             self._db = self._client[settings.MONGODB_DB_NAME]
             # Verify connection
             await self._client.admin.command("ping")

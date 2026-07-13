@@ -10,9 +10,9 @@ export default function Navbar() {
 
   const navItems = [
     { name: "Chart Terminal", href: "/", icon: Terminal },
-    { name: "Portfolio Optimizer", href: "/portfolio", icon: PieChart },
-    { name: "Backtester", href: "/backtest", icon: TrendingUp },
     { name: "Research Dossiers", href: "/reports", icon: FileText },
+    { name: "How to Use AI", href: "/tutorial", icon: PieChart },
+    { name: "Under the Hood", href: "/architecture", icon: TrendingUp },
   ];
 
   return (

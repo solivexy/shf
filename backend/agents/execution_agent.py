@@ -27,18 +27,21 @@ async def execution_agent_node(state: HedgeFundState) -> HedgeFundState:
     current_price = m_data.current_price if m_data else 150.0
     decision = pm_data.decision_not_owned if pm_data else "Hold"
 
+    # Determine currency prefix
+    curr = "IDR " if ticker.endswith(".JK") else "$"
+
     # Compute entry price & ideal buy zone
     if decision in ["Buy", "Strong Buy"]:
         entry_price = round(current_price * 0.996, 2)  # slight pullback target
-        ideal_buy_zone = f"${round(current_price * 0.990, 2):,.2f} - ${round(current_price * 1.002, 2):,.2f}"
+        ideal_buy_zone = f"{curr}{round(current_price * 0.990, 2):,.2f} - {curr}{round(current_price * 1.002, 2):,.2f}"
         suggested_order = "Limit Order on Pullback to VWAP / Support"
     elif decision in ["Sell", "Strong Sell", "Reduce"]:
         entry_price = round(current_price * 1.004, 2)  # sell on bounce
-        ideal_buy_zone = f"${round(current_price * 0.998, 2):,.2f} - ${round(current_price * 1.010, 2):,.2f} (Exit Zone)"
+        ideal_buy_zone = f"{curr}{round(current_price * 0.998, 2):,.2f} - {curr}{round(current_price * 1.010, 2):,.2f} (Exit Zone)"
         suggested_order = "TWAP / Limit Order on Bounce"
     else:
         entry_price = round(current_price, 2)
-        ideal_buy_zone = f"${round(current_price * 0.985, 2):,.2f} - ${round(current_price * 1.015, 2):,.2f} (Neutral Range)"
+        ideal_buy_zone = f"{curr}{round(current_price * 0.985, 2):,.2f} - {curr}{round(current_price * 1.015, 2):,.2f} (Neutral Range)"
         suggested_order = "No Action / Maintain Existing Hedge"
 
     # Stop loss & take profit from risk manager
@@ -48,8 +51,8 @@ async def execution_agent_node(state: HedgeFundState) -> HedgeFundState:
     stop_pct = round(((stop_loss_val - current_price) / current_price) * 100.0, 2)
     target_pct = round(((take_profit_val - current_price) / current_price) * 100.0, 2)
 
-    stop_str = f"${stop_loss_val:,.2f} ({stop_pct:g}%)"
-    target_str = f"${take_profit_val:,.2f} ({target_pct:+g}%)"
+    stop_str = f"{curr}{stop_loss_val:,.2f} ({stop_pct:g}%)"
+    target_str = f"{curr}{take_profit_val:,.2f} ({target_pct:+g}%)"
 
     # Calculate Risk-Reward Ratio
     risk_pts = abs(current_price - stop_loss_val)

@@ -65,8 +65,14 @@ class APIKeyManager:
         from google import genai
         from google.genai import types
         from google.genai.errors import APIError
+        from utils.semantic_cache import semantic_cache_manager
 
         settings = get_settings()
+
+        # Intent-Based Semantic Caching
+        cached_result = await semantic_cache_manager.get_semantic(prompt)
+        if cached_result:
+            return cached_result
 
         for attempt in range(retries + 1):
             key = await self.get_active_key()
@@ -105,11 +111,17 @@ class APIKeyManager:
                             text = text[7:]
                         if text.endswith("```"):
                             text = text[:-3]
-                        return json.loads(text.strip())
+                        parsed_result = json.loads(text.strip())
                     except Exception as parse_err:
                         logger.warning(f"JSON parsing failed from Gemini output: {parse_err}. Returning fallback.")
                         return fallback_json or {}
-                return response.text
+                else:
+                    parsed_result = response.text
+                
+                # Save to intent-based semantic cache
+                # Fire and forget (don't block the return)
+                asyncio.create_task(semantic_cache_manager.set_semantic(prompt, parsed_result))
+                return parsed_result
 
             except APIError as api_err:
                 err_str = str(api_err).lower()

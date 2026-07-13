@@ -107,6 +107,8 @@ export default function TerminalPage() {
           <CIORecommendationCard
             portfolioManager={state?.portfolio_manager}
             executionPlan={state?.execution_plan}
+            ticker={ticker}
+            marketData={state?.market_data}
           />
 
           {/* Candlestick Chart Pane */}
@@ -164,7 +166,7 @@ export default function TerminalPage() {
                   <MacroCard macroEconomy={state?.macro_economy} />
                 )}
                 {(activeTab === "ALL" || activeTab === "OPTIONS") && (
-                  <OptionsFlowCard optionsFlow={state?.options_flow} />
+                  <OptionsFlowCard optionsFlow={state?.options_flow} ticker={ticker} />
                 )}
                 {(activeTab === "ALL" || activeTab === "RISK") && (
                   <RiskMetricsCard riskManager={state?.risk_manager} />
