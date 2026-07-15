@@ -4,51 +4,35 @@
 
 @layer base {
   body {
-    @apply bg-[#131722] text-[#d1d4dc] font-mono antialiased min-h-screen selection:bg-[#2962ff]/30 selection:text-white;
+    @apply bg-background text-textPrimary font-sans antialiased min-h-screen selection:bg-accent/30 selection:text-white;
     font-feature-settings: "tnum" on, "lnum" on;
   }
 }
 
-/* TradingView sharp scrollbar */
+/* Modern smooth scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #131722;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2e39;
-  border-radius: 0px;
+  background: theme('colors.surfaceHover');
+  border-radius: 9999px;
+  border: 2px solid theme('colors.background');
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #363c4e;
+  background: theme('colors.textSecondary');
 }
 
-/* Remove decorative shadows and glow effects for a pure desktop trading workstation feel */
-.tv-panel {
-  background-color: #1e222d;
-  border: 1px solid #2a2e39;
+/* Modern Glass Panel Utility - Apple Style */
+.glass-panel {
+  @apply bg-surface/60 backdrop-blur-2xl backdrop-saturate-[1.8] border border-white/5 rounded-2xl shadow-xl shadow-black/50;
 }
 
-.tv-input {
-  background-color: #131722;
-  border: 1px solid #2a2e39;
-  color: #d1d4dc;
-}
-.tv-input:focus {
-  outline: none;
-  border-color: #2962ff;
-}
-
-.tv-button {
-  background-color: #2962ff;
-  color: #ffffff;
-  font-weight: 600;
-  border: 1px solid #2962ff;
-}
-.tv-button:hover {
-  background-color: #1e4bd8;
+.glass-panel-hover {
+  @apply transition-all duration-300 hover:bg-surfaceHover/70 hover:border-white/10 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/70;
 }
 
 /* Completely hide any third-party attribution logos, links, and watermarks inside lightweight charts */
