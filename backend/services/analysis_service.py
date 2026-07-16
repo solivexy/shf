@@ -57,7 +57,6 @@ class AnalysisService:
 
     async def _run_graph_loop(self, task_id: str, ticker: str):
         async def step_callback(state: HedgeFundState, node_name: str):
-            # Update active task result
             run_res = self._state_to_run_result(task_id, ticker, "RUNNING", state)
             self.active_tasks[task_id] = run_res
             await mongodb_manager.save_analysis_run(run_res)
@@ -66,11 +65,21 @@ class AnalysisService:
                 "node": node_name,
                 "data": run_res.model_dump()
             })
-            await asyncio.sleep(0.1)  # small yield for websocket delivery
+            await asyncio.sleep(0.01)
 
         try:
-            graph = build_hedge_fund_graph(step_callback=step_callback)
-            initial_state: HedgeFundState = {
+            from agents.market_data_agent import market_data_agent_node
+            from agents.historical_regime_agent import historical_regime_agent_node
+            from agents.technical_analysis_agent import technical_analysis_agent_node
+            from agents.news_intelligence_agent import news_intelligence_agent_node
+            from agents.macro_economy_agent import macro_economy_agent_node
+            from agents.options_flow_agent import options_flow_agent_node
+            from agents.risk_manager_agent import risk_manager_agent_node
+            from agents.ml_prediction_agent import ml_prediction_agent_node
+            from agents.portfolio_manager_agent import portfolio_manager_agent_node
+            from agents.execution_agent import execution_agent_node
+
+            state: HedgeFundState = {
                 "task_id": task_id,
                 "ticker": ticker,
                 "status": "RUNNING",
@@ -88,9 +97,40 @@ class AnalysisService:
                 ]
             }
 
-            final_state = await graph.ainvoke(initial_state)
-            final_status = "FAILED" if final_state.get("error") else "COMPLETED"
-            final_res = self._state_to_run_result(task_id, ticker, final_status, final_state)
+            # Helper to execute a node and fire callback
+            async def run_node(node_fn, name: str):
+                nonlocal state
+                try:
+                    logger.info(f"Executing Graph Node: {name}")
+                    state = await node_fn(state)
+                    await step_callback(state, name)
+                except Exception as e:
+                    logger.error(f"Error executing graph node {name}: {e}")
+                    state["error"] = f"Node {name} failed: {str(e)}"
+                    await step_callback(state, name)
+
+            # Phase 1: Market Data (Sequential - Foundation)
+            await run_node(market_data_agent_node, "market_data")
+            
+            if not state.get("error"):
+                # Phase 2: Parallel Fan-Out (Independent Data Gathering & Analysis)
+                await asyncio.gather(
+                    run_node(historical_regime_agent_node, "historical_regime"),
+                    run_node(technical_analysis_agent_node, "technical_analysis"),
+                    run_node(news_intelligence_agent_node, "news_intelligence"),
+                    run_node(macro_economy_agent_node, "macro_economy"),
+                    run_node(options_flow_agent_node, "options_flow")
+                )
+                
+                if not state.get("error"):
+                    # Phase 3: Sequential Synthesis
+                    await run_node(risk_manager_agent_node, "risk_manager")
+                    await run_node(ml_prediction_agent_node, "ml_prediction")
+                    await run_node(portfolio_manager_agent_node, "portfolio_manager")
+                    await run_node(execution_agent_node, "execution")
+
+            final_status = "FAILED" if state.get("error") else "COMPLETED"
+            final_res = self._state_to_run_result(task_id, ticker, final_status, state)
             
             self.active_tasks[task_id] = final_res
             await mongodb_manager.save_analysis_run(final_res)

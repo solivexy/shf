@@ -13,7 +13,7 @@ class MLPredictionEngine:
     Does NOT make direct Buy/Sell decisions; strictly provides quantitative probability & return direction signals.
     """
     def __init__(self):
-        self.feature_names = ["RSI_14", "MACD_Hist", "Log_Return", "Volume_Ratio", "Volatility", "SMA20_Dist", "StochRSI"]
+        self.feature_names = ["RSI_14", "MACD_Hist", "Log_Return", "Volume_Ratio", "Volatility", "SMA20_Dist", "StochRSI", "ATR_14"]
 
     def train_and_predict(self, df: pd.DataFrame, macro_score: float = 0.0) -> Dict[str, Any]:
         if df is None or len(df) < 50:
@@ -42,7 +42,10 @@ class MLPredictionEngine:
             # Train quick classifiers
             rf_clf = RandomForestClassifier(n_estimators=35, max_depth=4, random_state=42)
             xgb_clf = xgb.XGBClassifier(n_estimators=35, max_depth=3, learning_rate=0.08, random_state=42, eval_metric="logloss")
-            lgb_clf = lgb.LGBMClassifier(n_estimators=35, max_depth=3, learning_rate=0.08, random_state=42, verbose=-1)
+            import warnings
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                lgb_clf = lgb.LGBMClassifier(n_estimators=35, max_depth=3, learning_rate=0.08, random_state=42, verbose=-1, force_col_wise=True)
 
             rf_clf.fit(X, y_dir)
             xgb_clf.fit(X, y_dir)
@@ -129,6 +132,13 @@ class MLPredictionEngine:
         min_rsi = data["RSI_14"].rolling(14).min()
         max_rsi = data["RSI_14"].rolling(14).max()
         data["StochRSI"] = ((data["RSI_14"] - min_rsi) / (max_rsi - min_rsi).replace(0, 1e-10)) * 100
+
+        # ATR (Average True Range)
+        tr1 = high - low
+        tr2 = (high - close.shift(1)).abs()
+        tr3 = (low - close.shift(1)).abs()
+        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        data["ATR_14"] = tr.rolling(14).mean()
 
         data["Target_Ret"] = close.shift(-1) / close - 1.0
 

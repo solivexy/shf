@@ -28,7 +28,14 @@ async def ml_prediction_agent_node(state: HedgeFundState) -> HedgeFundState:
     macro_data = state.get("macro_economy")
     macro_score = macro_data.macro_score if macro_data else 0.0
 
-    prediction_dict = ml_prediction_engine.train_and_predict(df, macro_score=macro_score)
+    import asyncio
+    loop = asyncio.get_event_loop()
+    prediction_dict = await loop.run_in_executor(
+        None, 
+        ml_prediction_engine.train_and_predict, 
+        df, 
+        macro_score
+    )
 
     output = MLPredictionOutput(
         ticker=ticker,
