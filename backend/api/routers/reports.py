@@ -67,3 +67,24 @@ async def get_csv_report(task_id: str):
         "Content-Disposition": f"attachment; filename=SHF_Export_{run_result.ticker}_{task_id}.csv"
     }
     return Response(content=csv_text, media_type="text/csv", headers=headers)
+
+@router.delete("/{task_id}")
+async def delete_report(task_id: str):
+    """
+    Deletes a specific analysis task and dossier from the database.
+    """
+    success = await analysis_service.delete_report(task_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Failed to delete analysis task {task_id}.")
+    return {"message": f"Successfully deleted {task_id}"}
+
+
+@router.delete("")
+async def delete_all_reports():
+    """
+    Deletes all analysis tasks and dossiers from the database.
+    """
+    success = await analysis_service.delete_all_reports()
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to delete all analysis tasks.")
+    return {"message": "Successfully deleted all dossiers"}
