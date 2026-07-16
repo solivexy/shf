@@ -23,7 +23,7 @@ export default function AgentTimeline({ logs }: Props) {
       </div>
 
       {/* Log Rows Container */}
-      <div className="divide-y divide-[#2a2e39] overflow-y-auto max-h-[500px]">
+      <div className="divide-y divide-[#2a2e39] overflow-y-auto flex-1">
         {logs.map((log) => {
           const isCompleted = log.status === "COMPLETED";
           const isRunning = log.status === "RUNNING";
@@ -93,7 +93,7 @@ export default function AgentTimeline({ logs }: Props) {
                   {log.output_json && (
                     <div>
                       <div className="text-[#787b86] text-[10px] uppercase mb-0.5 font-semibold">Structured JSON Payload</div>
-                      <pre className="p-2 bg-[#1e222d] border border-[#2a2e39] overflow-x-auto text-[10px] text-[#2962ff] max-h-48">
+                      <pre className="p-2 bg-[#0f111a] border border-[#2a2e39] overflow-x-auto text-[10px] text-[#38bdf8] max-h-96">
                         {JSON.stringify(log.output_json, null, 2)}
                       </pre>
                     </div>
