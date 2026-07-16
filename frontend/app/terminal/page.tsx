@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLiveAnalysis } from "@/hooks/useLiveAnalysis";
 import AgentTimeline from "@/components/AgentTimeline";
 import PriceChart from "@/components/PriceChart";
@@ -15,9 +15,28 @@ import NewsCard from "@/components/NewsCard";
 import { Search, Play, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 
 export default function TerminalPage() {
-  const [inputTicker, setInputTicker] = useState<string>("AAPL");
-  const { ticker, taskId, state, loading, error, startAnalysis } = useLiveAnalysis("AAPL");
+  const [inputTicker, setInputTicker] = useState<string>("");
+  const { ticker, taskId, state, loading, error, startAnalysis, loadAnalysis } = useLiveAnalysis("");
   const [activeTab, setActiveTab] = useState<"ALL" | "REGIME" | "NEWS" | "TECHNICAL" | "MACRO" | "OPTIONS" | "RISK">("ALL");
+  const [recentReports, setRecentReports] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("http://localhost:8000/api/v1/reports?limit=6")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.reports) setRecentReports(data.reports);
+      })
+      .catch((err) => console.error("Failed to load recent reports", err));
+
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const passedTaskId = urlParams.get("taskId");
+      if (passedTaskId) {
+        loadAnalysis(passedTaskId);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,24 +115,103 @@ export default function TerminalPage() {
       )}
 
       {/* Main Container */}
-      <div className="flex-1 w-full max-w-[1600px] mx-auto px-6 pb-12 grid grid-cols-1 lg:grid-cols-4 gap-6">
-        
-        {/* Left 3 Columns: Workstation */}
-        <div className="lg:col-span-3 flex flex-col space-y-6">
+      {(!state && !loading) ? (
+        <div className="max-w-7xl mx-auto w-full px-6 py-12 flex flex-col items-center text-center animate-fade-in">
+          <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center text-accent mb-6 shadow-[0_0_30px_rgba(41,98,255,0.2)]">
+            <Search className="w-8 h-8" />
+          </div>
+          <h2 className="text-3xl font-bold text-white mb-4">Welcome to the AI Terminal</h2>
+          <p className="text-textSecondary text-[17px] leading-relaxed max-w-2xl mb-12">
+            Enter a stock symbol above (e.g., AAPL or BBRI.JK) to dispatch the autonomous multi-agent system. The AI will synthesize technicals, historical regimes, macroeconomics, and options flow to provide an institutional-grade recommendation.
+          </p>
           
-          <div className="glass-panel overflow-hidden p-2">
-            <CIORecommendationCard
-              portfolioManager={state?.portfolio_manager}
-              executionPlan={state?.execution_plan}
-              ticker={ticker}
-              marketData={state?.market_data}
-            />
+          <div className="w-full max-w-4xl text-left">
+            <h3 className="text-xs font-bold text-[#787b86] uppercase tracking-wider mb-4 px-2">Popular Stocks (Click to Analyze)</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {[
+                { symbol: "AAPL", name: "Apple Inc.", sector: "Technology" },
+                { symbol: "NVDA", name: "NVIDIA Corp.", sector: "Semiconductors" },
+                { symbol: "TSLA", name: "Tesla Inc.", sector: "Automotive" },
+                { symbol: "BBRI.JK", name: "Bank Rakyat", sector: "Finance (ID)" },
+                { symbol: "GOTO.JK", name: "GoTo Gojek", sector: "Tech (ID)" }
+              ].map((stock) => (
+                <button
+                  key={stock.symbol}
+                  onClick={() => {
+                    setInputTicker(stock.symbol);
+                    startAnalysis(stock.symbol);
+                  }}
+                  className="bg-[#1e222d] border border-[#2a2e39] p-4 rounded flex flex-col items-start text-left transition-all hover:border-[#2962ff] hover:-translate-y-1"
+                >
+                  <span className="text-[17px] font-bold text-white">{stock.symbol}</span>
+                  <span className="text-[11px] text-[#787b86] truncate w-full mt-1">{stock.name}</span>
+                  <span className="text-[9px] text-[#2962ff] mt-2 uppercase font-bold tracking-wide bg-[#2962ff]/10 px-1.5 py-0.5 rounded">{stock.sector}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="glass-panel overflow-hidden p-2">
-            <PriceChart ticker={ticker} currentPrice={currentPrice} marketData={state?.market_data} />
+          {recentReports.length > 0 && (
+            <div className="w-full max-w-4xl text-left mt-8">
+              <h3 className="text-xs font-bold text-[#787b86] uppercase tracking-wider mb-4 px-2">Recent Analyses</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {recentReports.map((report) => (
+                  <button
+                    key={report.report_id}
+                    onClick={() => {
+                      setInputTicker(report.ticker);
+                      loadAnalysis(report.report_id);
+                    }}
+                    className="bg-[#1e222d] border border-[#2a2e39] p-4 rounded flex flex-col items-start text-left transition-all hover:border-[#2962ff] hover:-translate-y-1 relative overflow-hidden group"
+                  >
+                    <div className="flex justify-between w-full items-center mb-2">
+                      <span className="text-[17px] font-bold text-white">{report.ticker}</span>
+                      <span className={`text-[10px] uppercase font-bold tracking-wide px-2 py-0.5 rounded ${report.decision.includes("Buy") ? "bg-[#089981]/10 text-[#089981]" : report.decision.includes("Sell") || report.decision.includes("Reduce") ? "bg-[#f23645]/10 text-[#f23645]" : "bg-[#f2a900]/10 text-[#f2a900]"}`}>
+                        {report.decision}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#787b86] line-clamp-2 w-full leading-relaxed">{report.summary}</span>
+                    <div className="mt-4 text-[10px] text-[#787b86] flex justify-between w-full font-mono uppercase">
+                      <span>Conf: {report.confidence}%</span>
+                      <span>{new Date(report.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+      <div className="flex-1 w-full max-w-[1600px] mx-auto px-6 pb-12 flex flex-col space-y-6 animate-fade-in">
+        
+        {/* Top Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left 3 Columns: Workstation */}
+          <div className="lg:col-span-3 flex flex-col space-y-6">
+            <div className="glass-panel overflow-hidden p-2">
+              <CIORecommendationCard
+                portfolioManager={state?.portfolio_manager}
+                executionPlan={state?.execution_plan}
+                ticker={ticker}
+                marketData={state?.market_data}
+              />
+            </div>
+
+            <div className="glass-panel overflow-hidden p-2">
+              <PriceChart ticker={ticker} currentPrice={currentPrice} marketData={state?.market_data} />
+            </div>
           </div>
 
+          {/* Right Sidebar: Timeline */}
+          <div className="lg:col-span-1 glass-panel overflow-hidden relative min-h-[400px]">
+            <div className="absolute inset-0 flex flex-col">
+              <AgentTimeline logs={logs} />
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="flex flex-col w-full">
           {/* Lower Terminal Tabs Bar - Minimalist */}
           <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-[14px] font-medium pt-2 pb-2">
             {[
@@ -140,7 +238,7 @@ export default function TerminalPage() {
           </div>
 
           {/* Lower Pane Content */}
-          <div className="bg-transparent p-0 space-y-6">
+          <div className="bg-transparent p-0 space-y-6 mt-4">
             {(activeTab === "ALL" || activeTab === "REGIME") && (
               <div className="glass-panel overflow-hidden p-2">
                 <HistoricalRegimeCard historicalRegime={state?.historical_regime} />
@@ -177,12 +275,8 @@ export default function TerminalPage() {
             )}
           </div>
         </div>
-
-        {/* Right Sidebar: Timeline */}
-        <div className="lg:col-span-1 glass-panel flex flex-col overflow-hidden relative min-h-[600px]">
-          <AgentTimeline logs={logs} />
-        </div>
       </div>
+      )}
     </div>
   );
 }
