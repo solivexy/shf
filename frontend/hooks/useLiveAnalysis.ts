@@ -30,7 +30,7 @@ export interface AnalysisState {
   execution_plan?: any;
 }
 
-export function useLiveAnalysis(initialTicker: string = "AAPL") {
+export function useLiveAnalysis(initialTicker: string = "") {
   const [ticker, setTicker] = useState<string>(initialTicker);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [state, setState] = useState<AnalysisState | null>(null);
@@ -55,8 +55,28 @@ export function useLiveAnalysis(initialTicker: string = "AAPL") {
     }
   }, []);
 
+  const loadAnalysis = useCallback(async (targetTaskId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await axios.get(`http://localhost:8000/api/v1/analyze/status/${targetTaskId}`);
+      if (res.data) {
+        setTicker(res.data.ticker);
+        setTaskId(res.data.task_id);
+        setState(res.data);
+        if (res.data.status === "COMPLETED" || res.data.status === "FAILED") {
+          setLoading(false);
+        }
+      }
+    } catch (err: any) {
+      setError("Failed to load historical analysis.");
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!taskId) return;
+    if (state?.status === "COMPLETED" || state?.status === "FAILED") return; // Skip WS if already done
 
     // Connect WebSocket
     const wsUrl = `ws://localhost:8000/api/v1/ws/live/${taskId}`;
@@ -114,5 +134,6 @@ export function useLiveAnalysis(initialTicker: string = "AAPL") {
     loading,
     error,
     startAnalysis,
+    loadAnalysis,
   };
 }
