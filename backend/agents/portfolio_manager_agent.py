@@ -64,6 +64,12 @@ async def portfolio_manager_agent_node(state: HedgeFundState) -> HedgeFundState:
         1
     )
 
+    # STRICT LOGICAL OVERRIDE: Prevent "Hold" or "Buy" if Technical Analysis is strongly Bearish.
+    # This resolves the anomaly where a bearish market trend might still output a "Hold" recommendation.
+    if tech_val <= 35.0 and weighted_score >= 54.0:
+        logger.info(f"Triggered Bearish Override: Technicals ({tech_val}) forced weighted score down from {weighted_score} to 49.0")
+        weighted_score = 49.0
+
     # Determine baseline decision rule
     if weighted_score >= 76.0:
         decision_owned = "Hold"

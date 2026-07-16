@@ -1,4 +1,6 @@
 import asyncio
+import certifi
+from motor.motor_asyncio import AsyncIOMotorClient
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 from utils.logger import setup_logger
@@ -292,8 +294,11 @@ class MongoDBManager:
     async def connect(self):
         settings = get_settings()
         try:
-            from motor.motor_asyncio import AsyncIOMotorClient
-            self._client = AsyncIOMotorClient(settings.MONGODB_URI, serverSelectionTimeoutMS=2000)
+            self._client = AsyncIOMotorClient(
+                settings.MONGODB_URI, 
+                serverSelectionTimeoutMS=5000,
+                tlsCAFile=certifi.where()
+            )
             self._db = self._client[settings.MONGODB_DB_NAME]
             # Verify connection
             await self._client.admin.command("ping")
@@ -306,7 +311,7 @@ class MongoDBManager:
             await self._db.analysis_runs.create_index("created_at")
         except Exception as e:
             self._mongo_available = False
-            logger.warning(f"MongoDB connection failed ({e}). Using in-memory fallback repository.")
+            logger.info(f"MongoDB connection failed ({e}). Using in-memory fallback repository.")
 
     async def save_analysis_run(self, result: AnalysisRunResult):
         async with self._lock:
@@ -359,55 +364,6 @@ class MongoDBManager:
                 results = list(self._memory_runs.values())
                 results.sort(key=lambda x: x.get("created_at", ""), reverse=True)
             
-            if not results:
-                # Return institutional benchmark dossiers when no scans have run yet
-                now = datetime.now(timezone.utc).isoformat()
-                return [
-                    {
-                        "task_id": "DOSSIER-INST-AAPL-01",
-                        "ticker": "AAPL",
-                        "status": "COMPLETED",
-                        "created_at": now,
-                        "portfolio_manager": {
-                            "decision": "Strong Buy",
-                            "confidence": 91.5,
-                            "mandate_summary": "Confluence of strong enterprise AI hardware cycle and expanding services margin. Kelly position sizing recommends 12.5% portfolio allocation with trailing stop at $218.50."
-                        }
-                    },
-                    {
-                        "task_id": "DOSSIER-INST-NVDA-02",
-                        "ticker": "NVDA",
-                        "status": "COMPLETED",
-                        "created_at": now,
-                        "portfolio_manager": {
-                            "decision": "Buy",
-                            "confidence": 88.0,
-                            "mandate_summary": "Options gamma exposure shows strong call wall accumulation at $140. ML XGBoost/LightGBM ensemble projects +8.4% upside over next 20 trading sessions."
-                        }
-                    },
-                    {
-                        "task_id": "DOSSIER-INST-MSFT-03",
-                        "ticker": "MSFT",
-                        "status": "COMPLETED",
-                        "created_at": now,
-                        "portfolio_manager": {
-                            "decision": "Buy",
-                            "confidence": 84.2,
-                            "mandate_summary": "Azure AI infrastructure growth offsetting personal computing seasonality. Historical regime comparison indicates favorable risk-adjusted Sharpe ratio of 2.14."
-                        }
-                    },
-                    {
-                        "task_id": "DOSSIER-INST-TSLA-04",
-                        "ticker": "TSLA",
-                        "status": "COMPLETED",
-                        "created_at": now,
-                        "portfolio_manager": {
-                            "decision": "Hold",
-                            "confidence": 68.0,
-                            "mandate_summary": "High implied volatility and macro yield sensitivity create neutral short-term regime. VWAP Iceberg execution advised on dips towards 200-day moving average."
-                        }
-                    }
-                ]
             return results[:limit]
 
     async def get_watchlist(self, name: str = "default") -> List[str]:
@@ -434,6 +390,27 @@ class MongoDBManager:
                 except Exception:
                     pass
             self._memory_watchlists[name] = clean_tickers
+
+    async def delete_analysis_run(self, task_id: str) -> bool:
+        async with self._lock:
+            if self._mongo_available and self._db is not None:
+                try:
+                    await self._db.analysis_runs.delete_one({"task_id": task_id})
+                except Exception as e:
+                    logger.debug(f"Failed to delete {task_id} from MongoDB: {e}")
+            if task_id in self._memory_runs:
+                del self._memory_runs[task_id]
+            return True
+
+    async def delete_all_analysis_runs(self) -> bool:
+        async with self._lock:
+            if self._mongo_available and self._db is not None:
+                try:
+                    await self._db.analysis_runs.delete_many({})
+                except Exception as e:
+                    logger.debug(f"Failed to delete all runs from MongoDB: {e}")
+            self._memory_runs.clear()
+            return True
 
 
 mongodb_manager = MongoDBManager()

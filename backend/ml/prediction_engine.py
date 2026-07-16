@@ -29,7 +29,7 @@ class MLPredictionEngine:
             if len(df_feat) < 30:
                 return self._get_baseline_prediction(float(df["Close"].iloc[-1]), macro_score)
 
-            X = df_feat[self.feature_names].values[:-1]
+            X = df_feat[self.feature_names].iloc[:-1]
             # Target 1: Binary up/down direction next bar
             y_dir = (df_feat["Target_Ret"].values[:-1] > 0).astype(int)
             # Target 2: Continuous return
@@ -49,7 +49,7 @@ class MLPredictionEngine:
             rf_reg.fit(X, y_ret)
 
             # Predict latest bar (current state)
-            X_latest = df_feat[self.feature_names].values[-1:].reshape(1, -1)
+            X_latest = df_feat[self.feature_names].iloc[-1:]
 
             p_rf = float(rf_clf.predict_proba(X_latest)[0, 1])
             p_xgb = float(xgb_clf.predict_proba(X_latest)[0, 1])

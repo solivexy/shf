@@ -27,7 +27,7 @@ class CacheManager:
             logger.info("Connected to Redis cache successfully.")
         except Exception as e:
             self._redis_available = False
-            logger.warning(f"Redis connection failed ({e}). Using in-memory fallback cache.")
+            logger.info(f"Redis connection failed ({e}). Using in-memory fallback cache.")
 
     async def get(self, key: str) -> Optional[Any]:
         async with self._lock:
@@ -45,7 +45,7 @@ class CacheManager:
             serialized = json.dumps(value, default=str)
             if self._redis_available and self._redis:
                 try:
-                    await self._redis.setex(key, ttl_seconds, serialized)
+                    await self._redis.set(key, serialized, ex=ttl_seconds)
                     return
                 except Exception as e:
                     logger.debug(f"Redis set failed for {key}: {e}")
