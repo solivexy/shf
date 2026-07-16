@@ -16,8 +16,8 @@ async def analyze_ticker(request: AnalyzeRequest):
     """
     if not request.ticker or len(request.ticker.strip()) == 0:
         raise HTTPException(status_code=400, detail="Ticker symbol cannot be empty.")
-    
-    result = await analysis_service.start_analysis_job(request.ticker.strip().upper())
+    clean_ticker = request.ticker.strip().upper().replace('-', '.')
+    result = await analysis_service.start_analysis_job(clean_ticker)
     return result
 
 
@@ -31,7 +31,7 @@ async def analyze_batch(request: BatchAnalyzeRequest):
     
     results = []
     for t in request.tickers[:10]: # cap at 10 for safety
-        clean_t = t.strip().upper()
+        clean_t = t.strip().upper().replace('-', '.')
         if clean_t:
             res = await analysis_service.start_analysis_job(clean_t)
             results.append(res)
@@ -54,5 +54,6 @@ async def get_ticker_history(ticker: str):
     """
     Retrieves historical analysis runs and CIO recommendations for a ticker.
     """
-    history = await analysis_service.get_history(ticker.strip().upper())
+    clean_ticker = ticker.strip().upper().replace('-', '.')
+    history = await analysis_service.get_history(clean_ticker)
     return history
