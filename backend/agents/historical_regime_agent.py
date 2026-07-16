@@ -126,10 +126,14 @@ async def historical_regime_agent_node(state: HedgeFundState) -> HedgeFundState:
                 monthly_group["Month"] = pd.Categorical(monthly_group["Month"], categories=month_order, ordered=True)
                 monthly_group = monthly_group.sort_values("Month")
                 for _, r in monthly_group.iterrows():
+                    mean_val = r["mean"]
+                    if pd.isna(mean_val):
+                        mean_val = 0.0
+                        
                     monthly_stats.append({
                         "month": r["Month"][:3],
-                        "avg_return": round(float(r["mean"] * 21), 2),  # ~21 trading days
-                        "win_prob": 62.5 if float(r["mean"]) > 0 else 38.5
+                        "avg_return": round(float(mean_val * 21), 2),  # ~21 trading days
+                        "win_prob": 62.5 if float(mean_val) > 0 else 38.5
                     })
             except Exception:
                 pass
