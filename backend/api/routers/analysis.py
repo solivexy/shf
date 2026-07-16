@@ -8,6 +8,17 @@ logger = logging.getLogger("api_analysis")
 router = APIRouter(prefix="/analyze", tags=["Analysis"])
 
 
+def _normalize_ticker(t: str) -> str:
+    if not t:
+        return ""
+    clean = t.strip().upper().replace('-', '.')
+    # Auto-append .JK for major Indonesian equities if suffix is omitted
+    idx_bluechips = {"BBCA", "BBRI", "BMRI", "BBNI", "ASII", "TLKM", "GOTO", "AMMN", "BREN", "BYAN", "UNVR", "ICBP"}
+    if clean in idx_bluechips:
+        return f"{clean}.JK"
+    return clean
+
+
 @router.post("", response_model=AnalysisRunResult)
 async def analyze_ticker(request: AnalyzeRequest):
     """
@@ -16,7 +27,7 @@ async def analyze_ticker(request: AnalyzeRequest):
     """
     if not request.ticker or len(request.ticker.strip()) == 0:
         raise HTTPException(status_code=400, detail="Ticker symbol cannot be empty.")
-    clean_ticker = request.ticker.strip().upper().replace('-', '.')
+    clean_ticker = _normalize_ticker(request.ticker)
     result = await analysis_service.start_analysis_job(clean_ticker)
     return result
 
@@ -31,7 +42,7 @@ async def analyze_batch(request: BatchAnalyzeRequest):
     
     results = []
     for t in request.tickers[:10]: # cap at 10 for safety
-        clean_t = t.strip().upper().replace('-', '.')
+        clean_t = _normalize_ticker(t)
         if clean_t:
             res = await analysis_service.start_analysis_job(clean_t)
             results.append(res)
@@ -54,6 +65,6 @@ async def get_ticker_history(ticker: str):
     """
     Retrieves historical analysis runs and CIO recommendations for a ticker.
     """
-    clean_ticker = ticker.strip().upper().replace('-', '.')
+    clean_ticker = _normalize_ticker(ticker)
     history = await analysis_service.get_history(clean_ticker)
     return history

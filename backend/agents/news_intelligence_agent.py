@@ -241,8 +241,17 @@ def _get_recent_headlines(ticker: str, company_name: str) -> List[Dict[str, str]
         gl = 'ID' if is_id else 'US'
         ceid = 'ID:id' if is_id else 'US:en'
         
-        # Build search query using ticker and company name
-        query_str = f"{ticker} {company_name}".strip()
+        # Clean ticker (e.g., "BBCA.JK" -> "BBCA")
+        clean_ticker = ticker.split('.')[0]
+        
+        # Clean company name of common legal entity suffixes/prefixes for better search matching
+        clean_company = company_name
+        for term in [' PT ', ' Tbk', 'PT ', ' Inc', ' Corp', ' Ltd', ' LLC', ' PLC']:
+            clean_company = clean_company.replace(term, ' ')
+        clean_company = clean_company.strip()
+        
+        # Build a high-precision search query using exact matches
+        query_str = f'"{clean_ticker}" OR "{clean_company}"'
         rss_url = f"https://news.google.com/rss/search?q={urllib.parse.quote(query_str)}&hl={hl}&gl={gl}&ceid={ceid}"
         
         with httpx.Client(timeout=5.0) as client:
