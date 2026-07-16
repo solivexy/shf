@@ -146,5 +146,14 @@ class AnalysisService:
     async def get_all_reports(self, limit: int = 50) -> List[Dict[str, Any]]:
         return await mongodb_manager.get_all_analysis_runs(limit=limit)
 
+    async def delete_report(self, task_id: str) -> bool:
+        if task_id in self.active_tasks:
+            del self.active_tasks[task_id]
+        return await mongodb_manager.delete_analysis_run(task_id)
+
+    async def delete_all_reports(self) -> bool:
+        self.active_tasks.clear()
+        return await mongodb_manager.delete_all_analysis_runs()
+
 
 analysis_service = AnalysisService()
