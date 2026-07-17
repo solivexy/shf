@@ -75,20 +75,10 @@ export default function NewsCard({ newsIntelligence }: Props) {
                     : cat.impact === "Negative"
                     ? "text-[#f23645] border-[#f23645]/30 bg-[#f23645]/10"
                     : "text-[#d1d4dc] border-[#2a2e39] bg-[#131722]";
-                const targetUrl =
-                  cat.url ||
-                  cat.link ||
-                  `https://www.google.com/search?q=${encodeURIComponent(
-                    (cat.headline || "") + " " + (ticker || "")
-                  )}&tbm=nws`;
-
                 return (
-                  <a
+                  <div
                     key={idx}
-                    href={targetUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-[#131722] p-2.5 border border-[#2a2e39] flex flex-col justify-between hover:border-[#2962ff] transition-colors cursor-pointer group block"
+                    className="bg-[#131722] p-2.5 border border-[#2a2e39] flex flex-col justify-between"
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="px-1.5 py-0.5 bg-[#2962ff]/20 text-[#2962ff] font-semibold rounded text-[10px] uppercase">
@@ -98,10 +88,10 @@ export default function NewsCard({ newsIntelligence }: Props) {
                         {cat.impact || "Neutral"}
                       </span>
                     </div>
-                    <p className="text-xs text-[#d1d4dc] group-hover:text-[#2962ff] transition-colors line-clamp-2 mt-1">
+                    <p className="text-xs text-[#d1d4dc] line-clamp-2 mt-1">
                       {cat.headline}
                     </p>
-                  </a>
+                  </div>
                 );
               })}
             </div>

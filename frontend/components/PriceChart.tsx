@@ -141,7 +141,11 @@ export default function PriceChart({ ticker, currentPrice, marketData }: Props) 
   }, [ticker, currentPrice, timeframe, marketData]);
 
   const priceFormatted = currentPrice ? currentPrice.toFixed(2) : "0.00";
-  const curr = ticker.toUpperCase().endsWith(".JK") ? "IDR " : "$";
+  const idxBluechips = ["BBCA", "BBRI", "BMRI", "BBNI", "ASII", "TLKM", "GOTO", "AMMN", "BREN", "BYAN", "UNVR", "ICBP"];
+  const isIndonesian = ticker.toUpperCase().endsWith(".JK") || 
+                       idxBluechips.includes(ticker.toUpperCase()) || 
+                       (marketData?.ticker && marketData.ticker.toUpperCase().endsWith(".JK"));
+  const curr = isIndonesian ? "IDR " : "$";
 
   return (
     <div className="bg-[#1e222d] border border-[#2a2e39] font-mono select-none flex flex-col">

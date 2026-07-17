@@ -30,7 +30,11 @@ export default function CIORecommendationCard({ portfolioManager, executionPlan,
   const isSellNotOwned = decisionNotOwned === "Sell" || decisionNotOwned === "Strong Sell" || decisionNotOwned.includes("Wait") || decisionNotOwned.includes("Do Not Buy");
   const notOwnedColor = isBuyNotOwned ? "text-[#089981]" : isSellNotOwned ? "text-[#f23645]" : "text-[#f2a900]";
 
-  const curr = ticker.toUpperCase().endsWith(".JK") ? "IDR " : "$";
+  const idxBluechips = ["BBCA", "BBRI", "BMRI", "BBNI", "ASII", "TLKM", "GOTO", "AMMN", "BREN", "BYAN", "UNVR", "ICBP"];
+  const isIndonesian = ticker.toUpperCase().endsWith(".JK") || 
+                       idxBluechips.includes(ticker.toUpperCase()) || 
+                       (marketData?.ticker && marketData.ticker.toUpperCase().endsWith(".JK"));
+  const curr = isIndonesian ? "IDR " : "$";
   const priceFormatted = marketData?.current_price ? marketData.current_price.toFixed(2) : "0.00";
   const changePercent = marketData?.daily_change_percent ? marketData.daily_change_percent.toFixed(2) : "0.00";
   const changeColor = Number(changePercent) >= 0 ? "text-[#089981]" : "text-[#f23645]";
