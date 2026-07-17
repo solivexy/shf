@@ -19,8 +19,8 @@ export default function CIORecommendationCard({ portfolioManager, executionPlan,
     );
   }
 
-  const decisionOwned = portfolioManager.decision_owned || decision;
-  const decisionNotOwned = portfolioManager.decision_not_owned || decision;
+  const decisionOwned = portfolioManager.decision_owned || "Hold";
+  const decisionNotOwned = portfolioManager.decision_not_owned || "Wait";
 
   const isBuyOwned = decisionOwned === "Buy" || decisionOwned === "Strong Buy";
   const isSellOwned = decisionOwned === "Sell" || decisionOwned === "Strong Sell" || decisionOwned === "Reduce";
