@@ -24,7 +24,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from deepeval.test_case import LLMTestCase, LLMTestCaseParams
+from deepeval.test_case import LLMTestCase, SingleTurnParams
 from deepeval.metrics import GEval
 
 from evals.groq_llm import GroqEvalLLM
@@ -58,9 +58,9 @@ handoff_integrity_metric = GEval(
         "or contradiction."
     ),
     evaluation_params=[
-        LLMTestCaseParams.INPUT,
-        LLMTestCaseParams.ACTUAL_OUTPUT,
-        LLMTestCaseParams.EXPECTED_OUTPUT,
+        SingleTurnParams.INPUT,
+        SingleTurnParams.ACTUAL_OUTPUT,
+        SingleTurnParams.EXPECTED_OUTPUT,
     ],
     model=groq_model,
     threshold=0.7,
@@ -77,8 +77,8 @@ graceful_degradation_metric = GEval(
         "A score of 0.0 means the agent produced contradictory or broken output."
     ),
     evaluation_params=[
-        LLMTestCaseParams.INPUT,
-        LLMTestCaseParams.ACTUAL_OUTPUT,
+        SingleTurnParams.INPUT,
+        SingleTurnParams.ACTUAL_OUTPUT,
     ],
     model=groq_model,
     threshold=0.6,
@@ -95,9 +95,9 @@ cumulative_coherence_metric = GEval(
         "should exist. A bullish pipeline should not produce a 'Sell' execution plan."
     ),
     evaluation_params=[
-        LLMTestCaseParams.INPUT,
-        LLMTestCaseParams.ACTUAL_OUTPUT,
-        LLMTestCaseParams.EXPECTED_OUTPUT,
+        SingleTurnParams.INPUT,
+        SingleTurnParams.ACTUAL_OUTPUT,
+        SingleTurnParams.EXPECTED_OUTPUT,
     ],
     model=groq_model,
     threshold=0.7,

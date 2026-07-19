@@ -32,7 +32,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from deepeval import evaluate
-from deepeval.test_case import LLMTestCase, LLMTestCaseParams
+from deepeval.test_case import LLMTestCase, SingleTurnParams
 from deepeval.metrics import GEval
 
 from evals.groq_llm import GroqEvalLLM
@@ -65,9 +65,9 @@ correctness_metric = GEval(
         "and financial reasoning are accurate and consistent."
     ),
     evaluation_params=[
-        LLMTestCaseParams.INPUT,
-        LLMTestCaseParams.ACTUAL_OUTPUT,
-        LLMTestCaseParams.EXPECTED_OUTPUT,
+        SingleTurnParams.INPUT,
+        SingleTurnParams.ACTUAL_OUTPUT,
+        SingleTurnParams.EXPECTED_OUTPUT,
     ],
     model=groq_model,
     threshold=0.6,
@@ -82,8 +82,8 @@ relevance_metric = GEval(
         "pertinent to the specific analysis domain (technical, macro, news, etc.)."
     ),
     evaluation_params=[
-        LLMTestCaseParams.INPUT,
-        LLMTestCaseParams.ACTUAL_OUTPUT,
+        SingleTurnParams.INPUT,
+        SingleTurnParams.ACTUAL_OUTPUT,
     ],
     model=groq_model,
     threshold=0.7,
@@ -99,8 +99,8 @@ coherence_metric = GEval(
         "technical indicators are strongly negative."
     ),
     evaluation_params=[
-        LLMTestCaseParams.INPUT,
-        LLMTestCaseParams.ACTUAL_OUTPUT,
+        SingleTurnParams.INPUT,
+        SingleTurnParams.ACTUAL_OUTPUT,
     ],
     model=groq_model,
     threshold=0.7,
@@ -115,8 +115,8 @@ completeness_metric = GEval(
         "no risk category) should lower the score significantly."
     ),
     evaluation_params=[
-        LLMTestCaseParams.INPUT,
-        LLMTestCaseParams.ACTUAL_OUTPUT,
+        SingleTurnParams.INPUT,
+        SingleTurnParams.ACTUAL_OUTPUT,
     ],
     model=groq_model,
     threshold=0.6,
@@ -132,8 +132,8 @@ financial_reasoning_metric = GEval(
         "Penalize vague or generic statements that lack numerical backing."
     ),
     evaluation_params=[
-        LLMTestCaseParams.INPUT,
-        LLMTestCaseParams.ACTUAL_OUTPUT,
+        SingleTurnParams.INPUT,
+        SingleTurnParams.ACTUAL_OUTPUT,
     ],
     model=groq_model,
     threshold=0.6,
@@ -150,9 +150,9 @@ bearish_override_metric = GEval(
         "and must receive a score of 0."
     ),
     evaluation_params=[
-        LLMTestCaseParams.INPUT,
-        LLMTestCaseParams.ACTUAL_OUTPUT,
-        LLMTestCaseParams.EXPECTED_OUTPUT,
+        SingleTurnParams.INPUT,
+        SingleTurnParams.ACTUAL_OUTPUT,
+        SingleTurnParams.EXPECTED_OUTPUT,
     ],
     model=groq_model,
     threshold=0.7,
@@ -168,8 +168,8 @@ dual_decision_metric = GEval(
         "A single generic recommendation without ownership distinction is a FAILURE."
     ),
     evaluation_params=[
-        LLMTestCaseParams.INPUT,
-        LLMTestCaseParams.ACTUAL_OUTPUT,
+        SingleTurnParams.INPUT,
+        SingleTurnParams.ACTUAL_OUTPUT,
     ],
     model=groq_model,
     threshold=0.7,

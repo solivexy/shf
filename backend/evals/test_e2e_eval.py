@@ -24,7 +24,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from deepeval.test_case import LLMTestCase, LLMTestCaseParams
+from deepeval.test_case import LLMTestCase, SingleTurnParams
 from deepeval.metrics import GEval
 
 from evals.groq_llm import GroqEvalLLM
@@ -58,8 +58,8 @@ output_stability_metric = GEval(
         "this is a critical stability failure and must receive a score of 0."
     ),
     evaluation_params=[
-        LLMTestCaseParams.INPUT,
-        LLMTestCaseParams.ACTUAL_OUTPUT,
+        SingleTurnParams.INPUT,
+        SingleTurnParams.ACTUAL_OUTPUT,
     ],
     model=groq_model,
     threshold=0.8,
@@ -75,8 +75,8 @@ schema_compliance_metric = GEval(
         "Missing or null fields indicate a broken pipeline and should score 0."
     ),
     evaluation_params=[
-        LLMTestCaseParams.INPUT,
-        LLMTestCaseParams.ACTUAL_OUTPUT,
+        SingleTurnParams.INPUT,
+        SingleTurnParams.ACTUAL_OUTPUT,
     ],
     model=groq_model,
     threshold=0.9,
@@ -93,8 +93,8 @@ error_resilience_metric = GEval(
         "A system that silently swallows errors and produces fake results scores 0."
     ),
     evaluation_params=[
-        LLMTestCaseParams.INPUT,
-        LLMTestCaseParams.ACTUAL_OUTPUT,
+        SingleTurnParams.INPUT,
+        SingleTurnParams.ACTUAL_OUTPUT,
     ],
     model=groq_model,
     threshold=0.7,
