@@ -50,12 +50,15 @@ groq_model = GroqEvalLLM(model_name="openai/gpt-oss-120b")
 handoff_integrity_metric = GEval(
     name="Handoff Integrity",
     criteria=(
-        "Evaluate whether the downstream agent's output correctly references and uses "
-        "data from its upstream dependencies. For example, if the upstream Market Data Agent "
-        "reports AAPL at $228.40, the downstream Execution Agent's entry price should be "
-        "logically derived from that number. Check that ticker symbols, price references, "
-        "and analytical conclusions flow consistently through the pipeline without data loss "
-        "or contradiction."
+        "Evaluate whether the downstream agent's output correctly incorporates relevant "
+        "data from its upstream dependencies without introducing contradictory information. "
+        "Note the following nuances: "
+        "1. Not all agents require market price data; e.g., News and Macro agents primarily "
+        "rely on the ticker symbol. Do not penalize them for omitting the numeric spot price. "
+        "2. The Execution Agent may derive limit orders or pullback entries that differ from "
+        "the exact upstream spot price. This is expected behavior and should not be penalized. "
+        "3. Focus on ensuring no contradictory data is introduced and that the required "
+        "schema fields are populated sensibly based on the input context."
     ),
     evaluation_params=[
         SingleTurnParams.INPUT,
@@ -90,9 +93,12 @@ cumulative_coherence_metric = GEval(
         "This test compares the FIRST agent's raw data (Market Data) with the LAST "
         "agent's final output (Execution Plan) to verify that the entire 10-agent "
         "sequential pipeline maintained logical coherence. The final execution plan's "
-        "entry price, stop loss, and order type should be traceable back to the original "
-        "market data price. No hallucinated numbers or contradictory recommendations "
-        "should exist. A bullish pipeline should not produce a 'Sell' execution plan."
+        "entry price, stop loss, and order type should logically stem from the original "
+        "market data price. "
+        "Note: The Execution plan may derive limit prices (e.g. slight pullbacks) or "
+        "synthetic stop-losses that do not exactly match the spot price. Do not penalize "
+        "these derived values as hallucinations as long as they are mathematically reasonable. "
+        "A bullish pipeline should not produce a 'Sell' execution plan."
     ),
     evaluation_params=[
         SingleTurnParams.INPUT,

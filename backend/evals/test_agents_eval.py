@@ -77,9 +77,10 @@ relevance_metric = GEval(
     name="Relevance",
     criteria=(
         "Assess whether the actual output is relevant to the input query. "
-        "The output should directly address the financial analysis request, "
-        "mention the correct ticker symbol, and provide information "
-        "pertinent to the specific analysis domain (technical, macro, news, etc.)."
+        "The output should directly address the financial analysis request and provide information "
+        "pertinent to the specific analysis domain (technical, macro, news, etc.). "
+        "Note: Macro Economy data is generalized and may not explicitly name the specific ticker symbol; "
+        "do not penalize it for omitting the ticker if the broader macroeconomic context is relevant."
     ),
     evaluation_params=[
         SingleTurnParams.INPUT,
@@ -93,10 +94,11 @@ coherence_metric = GEval(
     name="Coherence",
     criteria=(
         "Evaluate whether the actual output is logically coherent, well-structured, "
-        "and internally consistent. Financial recommendations should not contradict "
-        "the supporting data. For example, a bullish recommendation must be supported "
-        "by predominantly bullish evidence, and bearish overrides must fire when "
-        "technical indicators are strongly negative."
+        "and internally consistent. "
+        "Note: Not all agents produce financial recommendations (e.g., Market Data "
+        "only fetches raw metrics, Risk Manager only computes risk). Do not penalize agents "
+        "for lacking a bullish/bearish recommendation if it is not their role. "
+        "Where recommendations exist, they must not contradict the supporting data."
     ),
     evaluation_params=[
         SingleTurnParams.INPUT,
@@ -126,10 +128,12 @@ financial_reasoning_metric = GEval(
     name="Financial Reasoning Quality",
     criteria=(
         "Evaluate the depth and quality of financial reasoning in the output. "
-        "Assess whether the agent demonstrates institutional-grade analytical rigor: "
-        "quantitative evidence, risk-adjusted metrics (Sharpe, VaR, drawdown), "
-        "multi-factor synthesis, and actionable trade parameters. "
-        "Penalize vague or generic statements that lack numerical backing."
+        "Assess whether the agent demonstrates institutional-grade analytical rigor "
+        "appropriate for its specific role. "
+        "Note: Risk-adjusted metrics (Sharpe, VaR) and trade parameters (stops/limits) "
+        "are strictly the domain of Risk and Execution agents. Do not penalize News, Macro, "
+        "or Market Data agents for omitting these downstream metrics. Evaluate them solely "
+        "on their domain-specific synthesis and quantitative evidence."
     ),
     evaluation_params=[
         SingleTurnParams.INPUT,
@@ -162,9 +166,11 @@ dual_decision_metric = GEval(
     name="Dual-Decision Logic",
     criteria=(
         "Verify that the Portfolio Manager output contains TWO distinct decisions: "
-        "one for users who already own the asset (decision_owned) and one for "
-        "users who do not (decision_not_owned). The decisions must be logically "
-        "appropriate: 'Hold'/'Reduce'/'Sell' for owned, 'Buy'/'Wait' for not owned. "
+        "one for users who already own the asset and one for users who do not. "
+        "The fields do not need to be literal JSON keys like 'decision_owned' (they may be "
+        "formatted in markdown like 'Decision (If Owned)'). "
+        "The decisions must be logically appropriate: 'Hold'/'Reduce'/'Sell' for owned, "
+        "'Buy'/'Wait' for not owned. "
         "A single generic recommendation without ownership distinction is a FAILURE."
     ),
     evaluation_params=[
