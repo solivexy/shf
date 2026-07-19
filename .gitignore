@@ -28,6 +28,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+.deepeval/
+results/
 
 # Frontend / Node
 frontend/node_modules/
