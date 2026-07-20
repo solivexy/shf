@@ -59,12 +59,11 @@ class APIKeyManager:
         retries: int = 2
     ) -> Union[str, Dict[str, Any]]:
         """
-        Invokes Gemini with automatic key rotation and retries.
+        Invokes Gemini with automatic key rotation and retries using LangChain.
         If no key is available or all fail, returns fallback_json or fallback string.
         """
-        from google import genai
-        from google.genai import types
-        from google.genai.errors import APIError
+        from langchain_google_genai import ChatGoogleGenerativeAI
+        from langchain_core.messages import SystemMessage, HumanMessage
         from utils.semantic_cache import semantic_cache_manager
 
         settings = get_settings()
@@ -81,32 +80,41 @@ class APIKeyManager:
                 return fallback_json if json_output else "Synthesized institutional reasoning via offline deterministic fallback."
 
             try:
-                client = genai.Client(api_key=key)
-                config_kwargs = {
+                chat_kwargs = {
+                    "model": self.model_name,
+                    "google_api_key": key,
                     "temperature": 0.2,
                 }
-                if system_instruction:
-                    config_kwargs["system_instruction"] = system_instruction
                 if json_output:
-                    config_kwargs["response_mime_type"] = "application/json"
+                    chat_kwargs["response_mime_type"] = "application/json"
+                    
+                chat = ChatGoogleGenerativeAI(**chat_kwargs)
+                
+                messages = []
+                if system_instruction:
+                    messages.append(SystemMessage(content=system_instruction))
+                messages.append(HumanMessage(content=prompt))
 
-                config = types.GenerateContentConfig(**config_kwargs)
-
-                # Run synchronously inside asyncio thread pool to avoid blocking
-                loop = asyncio.get_event_loop()
-                response = await loop.run_in_executor(
-                    None,
-                    lambda: client.models.generate_content(
-                        model=self.model_name,
-                        contents=prompt,
-                        config=config
-                    )
-                )
+                response = await chat.ainvoke(messages)
+                
+                if isinstance(response.content, str):
+                    text = response.content.strip()
+                elif isinstance(response.content, list):
+                    text_parts = []
+                    for part in response.content:
+                        if isinstance(part, dict) and "text" in part:
+                            text_parts.append(part["text"])
+                        elif isinstance(part, str):
+                            text_parts.append(part)
+                        else:
+                            text_parts.append(str(part))
+                    text = "".join(text_parts).strip()
+                else:
+                    text = str(response.content).strip()
 
                 if json_output:
                     try:
                         # Clean markdown codeblocks if present
-                        text = response.text.strip()
                         if text.startswith("```json"):
                             text = text[7:]
                         if text.endswith("```"):
@@ -116,27 +124,24 @@ class APIKeyManager:
                         logger.warning(f"JSON parsing failed from Gemini output: {parse_err}. Returning fallback.")
                         return fallback_json or {}
                 else:
-                    parsed_result = response.text
+                    parsed_result = text
                 
                 # Save to intent-based semantic cache
                 # Fire and forget (don't block the return)
                 asyncio.create_task(semantic_cache_manager.set_semantic(prompt, parsed_result))
                 return parsed_result
 
-            except APIError as api_err:
-                err_str = str(api_err).lower()
+            except Exception as e:
+                err_str = str(e).lower()
                 if "429" in err_str or "exhausted" in err_str or "quota" in err_str:
                     await self.report_rate_limit(key, cooldown_seconds=65.0)
                     logger.warning(f"Rate limit hit on attempt {attempt+1}/{retries+1}. Retrying with rotated key...")
                     await asyncio.sleep(1.0)
                     continue
                 else:
-                    logger.error(f"Gemini APIError: {api_err}")
-                    break
-            except Exception as e:
-                logger.error(f"Unexpected error calling Gemini: {e}")
-                await self.report_rate_limit(key, cooldown_seconds=30.0)
-                await asyncio.sleep(0.5)
+                    logger.error(f"Unexpected error calling Gemini via LangChain: {e}")
+                    await self.report_rate_limit(key, cooldown_seconds=30.0)
+                    await asyncio.sleep(0.5)
 
         logger.warning("All key retry attempts exhausted. Using institutional fallback synthesis.")
         return fallback_json if json_output else "Synthesized institutional reasoning via offline deterministic fallback."

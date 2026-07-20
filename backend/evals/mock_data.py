@@ -218,7 +218,7 @@ BEARISH_OVERRIDE_INPUT = (
 
 BEARISH_OVERRIDE_OUTPUT = (
     "CIO Portfolio Manager Decision for TSLA:\n"
-    "- Decision (If Owned): Strong Sell\n"
+    "- Decision (If Owned): Sell\n"
     "- Decision (If Not Owned): Wait / Do Not Buy\n"
     "- Confidence: 85.0%\n"
     "- Position Size: 0% (Full Exit Recommended)\n"

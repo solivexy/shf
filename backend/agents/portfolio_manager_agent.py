@@ -66,12 +66,16 @@ async def portfolio_manager_agent_node(state: HedgeFundState) -> HedgeFundState:
 
     # STRICT LOGICAL OVERRIDE: Prevent "Hold" or "Buy" if Technical Analysis is strongly Bearish.
     # This resolves the anomaly where a bearish market trend might still output a "Hold" recommendation.
-    if tech_val <= 35.0 and weighted_score >= 54.0:
-        logger.info(f"Triggered Bearish Override: Technicals ({tech_val}) forced weighted score down from {weighted_score} to 49.0")
-        weighted_score = 49.0
+    is_bearish_override = False
+    if tech_val <= 35.0:
+        is_bearish_override = True
+        logger.info(f"Triggered Bearish Override: Technicals ({tech_val}) forced decisions to Strong Sell / Wait")
 
     # Determine baseline decision rule
-    if weighted_score >= 76.0:
+    if is_bearish_override:
+        decision_owned = "Sell"
+        decision_not_owned = "Wait / Do Not Buy"
+    elif weighted_score >= 76.0:
         decision_owned = "Hold"
         decision_not_owned = "Strong Buy"
     elif weighted_score >= 62.0:
@@ -143,6 +147,9 @@ Weighted Multi-Agent Confluence Score: {weighted_score} / 100
 
 Synthesize these inputs, explicitly resolve any conflicting signals (e.g. bullish technicals vs macro headwinds), and output the FINAL institutional recommendation.
 Because portfolio recommendation logic must account for user asset ownership, you must output two decisions: one assuming the user already owns the asset, and one assuming they do not.
+
+CRITICAL RULE: If the Technical Analysis Bullish Score is <= 35.0, you MUST enforce a Bearish Override. Your decision MUST be "Sell" for existing owners and "Wait / Do Not Buy" for non-owners, regardless of the weighted score.
+
 Return a valid JSON object strictly adhering to this exact schema:
 {{
   "ticker": "{ticker}",
