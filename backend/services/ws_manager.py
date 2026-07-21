@@ -3,6 +3,7 @@ import json
 import logging
 from typing import Dict, List, Any
 from fastapi import WebSocket
+from utils.json_helpers import clean_json_floats
 
 logger = logging.getLogger("ws_manager")
 
@@ -34,7 +35,8 @@ class ConnectionManager:
             logger.info(f"WebSocket client disconnected for task_id: {task_id}")
 
     async def broadcast_to_task(self, task_id: str, message: Dict[str, Any]):
-        serialized = json.dumps(message, default=str)
+        cleaned_message = clean_json_floats(message)
+        serialized = json.dumps(cleaned_message, default=str)
         async with self.lock:
             sockets = self.active_connections.get(task_id, []) + self.active_connections.get("broadcast", [])
             for ws in list(set(sockets)):
@@ -42,6 +44,5 @@ class ConnectionManager:
                     await ws.send_text(serialized)
                 except Exception as e:
                     logger.debug(f"Failed sending WebSocket message to {task_id}: {e}")
-
 
 ws_manager = ConnectionManager()

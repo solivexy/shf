@@ -63,6 +63,7 @@ output_stability_metric = GEval(
     ],
     model=groq_model,
     threshold=0.8,
+    strict_mode=True,
 )
 
 schema_compliance_metric = GEval(
@@ -80,6 +81,7 @@ schema_compliance_metric = GEval(
     ],
     model=groq_model,
     threshold=0.9,
+    strict_mode=True,
 )
 
 error_resilience_metric = GEval(
@@ -97,7 +99,8 @@ error_resilience_metric = GEval(
         SingleTurnParams.ACTUAL_OUTPUT,
     ],
     model=groq_model,
-    threshold=0.7,
+    threshold=0.6,
+    strict_mode=True,
 )
 
 
@@ -120,18 +123,7 @@ def build_stability_test():
             f"for the same ticker (AAPL) under identical market conditions.\n\n"
             f"Results across {STABILITY_RUNS} runs:\n{runs_summary}"
         ),
-        actual_output=(
-            f"Stability Analysis:\n"
-            f"- All {STABILITY_RUNS} runs produced the SAME core decisions:\n"
-            f"  decision_owned = 'Hold' (consistent)\n"
-            f"  decision_not_owned = 'Buy' (consistent)\n"
-            f"- Confidence range: {min(r['confidence'] for r in SIMULATED_RUNS):.1f}% "
-            f"to {max(r['confidence'] for r in SIMULATED_RUNS):.1f}% "
-            f"(variance: {max(r['confidence'] for r in SIMULATED_RUNS) - min(r['confidence'] for r in SIMULATED_RUNS):.1f}%)\n"
-            f"- Entry price: identical across all runs ($227.49)\n"
-            f"- Stop loss: identical across all runs ($218.28)\n"
-            f"- Verdict: STABLE"
-        ),
+        actual_output=json.dumps(SIMULATED_RUNS, indent=2),
     )
     return [tc], ["E2E: Output Stability ({} runs)".format(STABILITY_RUNS)], [[output_stability_metric]]
 
@@ -145,18 +137,9 @@ def build_schema_compliance_test():
     tc = LLMTestCase(
         input=(
             f"The pipeline produced a final output for AAPL. "
-            f"Required schema fields: {', '.join(REQUIRED_SCHEMA_FIELDS)}\n\n"
-            f"Actual output:\n{json.dumps(run, indent=2)}"
+            f"Required schema fields: {', '.join(REQUIRED_SCHEMA_FIELDS)}"
         ),
-        actual_output=(
-            f"Schema Compliance Check:\n"
-            f"- Present fields ({len(present_fields)}/{len(REQUIRED_SCHEMA_FIELDS)}): "
-            f"{', '.join(present_fields)}\n"
-            f"- Missing fields ({len(missing_fields)}): "
-            f"{', '.join(missing_fields) if missing_fields else 'None'}\n"
-            f"- All values are non-null: {'Yes' if not missing_fields else 'No'}\n"
-            f"- Verdict: {'COMPLIANT' if not missing_fields else 'NON-COMPLIANT'}"
-        ),
+        actual_output=json.dumps(run, indent=2),
     )
     return [tc], ["E2E: Schema Compliance"], [[schema_compliance_metric]]
 
@@ -191,19 +174,9 @@ def build_error_resilience_test():
         input=(
             "The SHF pipeline was running for AAPL when the News Intelligence Agent "
             "encountered a Groq API rate limit error (HTTP 429) at 12.3 seconds into "
-            "execution. The system must capture this failure gracefully.\n\n"
-            f"Error state output:\n{json.dumps(ERROR_RUN, indent=2)}"
+            "execution. The system must capture this failure gracefully."
         ),
-        actual_output=(
-            f"Error State Analysis:\n"
-            f"- Error captured: Yes\n"
-            f"- Failed agent identified: news_intelligence\n"
-            f"- Error message: '{ERROR_RUN['error']}'\n"
-            f"- Downstream outputs (portfolio_manager, execution): null (correctly)\n"
-            f"- No hallucinated data present: Confirmed\n"
-            f"- Verdict: System correctly identified the failure point and prevented "
-            f"downstream agents from executing with incomplete data."
-        ),
+        actual_output=json.dumps(ERROR_RUN, indent=2),
     )
     return [tc], ["Operation: Error Resilience (mid-pipeline failure)"], [[error_resilience_metric]]
 

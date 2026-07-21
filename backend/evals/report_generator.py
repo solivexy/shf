@@ -129,7 +129,7 @@ def _generate_main_markdown(results_data, output_path, global_stats, level_info)
 
 def _generate_main_html(results_data, output_path, global_stats, level_info):
     is_ready = global_stats['pass_rate'] >= TARGET_OVERALL_SCORE
-    ready_status = "DEPLOYMENT READY" if is_ready else "NEEDS IMPROVEMENT"
+    ready_status = "READY" if is_ready else "NOT READY"
     ready_color = "#10b981" if is_ready else "#ef4444"
 
     # Per-level chart data
@@ -164,7 +164,7 @@ def _generate_main_html(results_data, output_path, global_stats, level_info):
             <div class="level-label">{label}</div>
             <div class="level-rate" style="color: {rate_color};">{rate:.1f}%</div>
             <div class="level-detail">{stats['total_pass']}/{stats['total_tests']} passed</div>
-            <div class="level-arrow">&rarr; View Details</div>
+            <div class="level-view">View Details</div>
         </a>
 """
 
@@ -195,7 +195,7 @@ def _generate_main_html(results_data, output_path, global_stats, level_info):
                 highlights_html += f'<li class="more">...and {len(failures) - 5} more</li>\n'
             highlights_html += '</ul>\n'
         else:
-            highlights_html += '<p class="all-pass">&#x2705; All metrics passed!</p>\n'
+            highlights_html += '<p class="all-pass">All metrics passed!</p>\n'
         highlights_html += '</div>\n'
 
     html = f"""<!DOCTYPE html>
@@ -231,7 +231,7 @@ def _generate_main_html(results_data, output_path, global_stats, level_info):
         .level-label {{ font-weight: 700; font-size: 1rem; color: #cbd5e1; }}
         .level-rate {{ font-size: 2rem; font-weight: 700; margin: 0.25rem 0; }}
         .level-detail {{ font-size: 0.8rem; color: #94a3b8; }}
-        .level-arrow {{ margin-top: 0.75rem; color: #38bdf8; font-size: 0.85rem; }}
+        .level-view {{ margin-top: 0.75rem; color: #38bdf8; font-size: 0.85rem; }}
 
         /* Chart sections */
         .chart-section {{ background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }}
@@ -315,7 +315,7 @@ def _generate_main_html(results_data, output_path, global_stats, level_info):
         </div>
 
         <div class="footer">
-            SHF Multi-Agent Quantitative Engine &bull; Evaluation Suite v2.0
+            SHF Multi-Agent Quantitative Engine
         </div>
     </div>
 

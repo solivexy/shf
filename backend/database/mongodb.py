@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from utils.logger import setup_logger
 from config.settings import get_settings
 from models.schemas import AnalysisRunResult
+from utils.json_helpers import clean_json_floats
 
 logger = setup_logger("mongodb")
 
@@ -315,7 +316,7 @@ class MongoDBManager:
 
     async def save_analysis_run(self, result: AnalysisRunResult):
         async with self._lock:
-            data = result.model_dump()
+            data = clean_json_floats(result.model_dump())
             if self._mongo_available and self._db is not None:
                 try:
                     await self._db.analysis_runs.update_one(
@@ -353,17 +354,16 @@ class MongoDBManager:
 
     async def get_all_analysis_runs(self, limit: int = 50) -> List[Dict[str, Any]]:
         async with self._lock:
-            results: List[Dict[str, Any]] = []
             if self._mongo_available and self._db is not None:
                 try:
                     cursor = self._db.analysis_runs.find({}, {"_id": 0}).sort("created_at", -1).limit(limit)
-                    results = await cursor.to_list(length=limit)
+                    return await cursor.to_list(length=limit)
                 except Exception as e:
                     logger.debug(f"Failed to query all runs from MongoDB: {e}")
-            if not results:
-                results = list(self._memory_runs.values())
-                results.sort(key=lambda x: x.get("created_at", ""), reverse=True)
             
+            # Fallback to memory runs only if Mongo is unavailable or fails
+            results = list(self._memory_runs.values())
+            results.sort(key=lambda x: x.get("created_at", ""), reverse=True)
             return results[:limit]
 
     async def get_watchlist(self, name: str = "default") -> List[str]:

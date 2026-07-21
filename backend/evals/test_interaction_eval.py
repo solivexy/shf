@@ -67,6 +67,7 @@ handoff_integrity_metric = GEval(
     ],
     model=groq_model,
     threshold=0.7,
+    strict_mode=True,
 )
 
 graceful_degradation_metric = GEval(
@@ -85,6 +86,7 @@ graceful_degradation_metric = GEval(
     ],
     model=groq_model,
     threshold=0.6,
+    strict_mode=True,
 )
 
 cumulative_coherence_metric = GEval(
@@ -107,6 +109,7 @@ cumulative_coherence_metric = GEval(
     ],
     model=groq_model,
     threshold=0.7,
+    strict_mode=True,
 )
 
 
