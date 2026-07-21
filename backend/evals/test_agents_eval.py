@@ -71,6 +71,7 @@ correctness_metric = GEval(
     ],
     model=groq_model,
     threshold=0.6,
+    strict_mode=True,
 )
 
 relevance_metric = GEval(
@@ -88,6 +89,7 @@ relevance_metric = GEval(
     ],
     model=groq_model,
     threshold=0.7,
+    strict_mode=True,
 )
 
 coherence_metric = GEval(
@@ -106,6 +108,7 @@ coherence_metric = GEval(
     ],
     model=groq_model,
     threshold=0.7,
+    strict_mode=True,
 )
 
 completeness_metric = GEval(
@@ -122,6 +125,7 @@ completeness_metric = GEval(
     ],
     model=groq_model,
     threshold=0.6,
+    strict_mode=True,
 )
 
 financial_reasoning_metric = GEval(
@@ -141,6 +145,7 @@ financial_reasoning_metric = GEval(
     ],
     model=groq_model,
     threshold=0.6,
+    strict_mode=True,
 )
 
 bearish_override_metric = GEval(
@@ -160,6 +165,7 @@ bearish_override_metric = GEval(
     ],
     model=groq_model,
     threshold=0.7,
+    strict_mode=True,
 )
 
 dual_decision_metric = GEval(
@@ -179,6 +185,7 @@ dual_decision_metric = GEval(
     ],
     model=groq_model,
     threshold=0.7,
+    strict_mode=True,
 )
 
 
