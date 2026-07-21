@@ -93,7 +93,7 @@ def generate_level_markdown(results_data: list, output_path: str, summary_stats:
 
 def generate_level_html(results_data: list, output_path: str, summary_stats: dict, title: str, main_link: str = None):
     is_ready = summary_stats['pass_rate'] >= TARGET_OVERALL_SCORE
-    ready_status = "DEPLOYMENT READY" if is_ready else "NEEDS IMPROVEMENT"
+    ready_status = "READY" if is_ready else "NOT READY"
     ready_color = "#10b981" if is_ready else "#ef4444"
 
     # Prepare chart data — use SCORE not pass rate so 0-score bars show up
@@ -115,7 +115,7 @@ def generate_level_html(results_data: list, output_path: str, summary_stats: dic
 
     back_btn = ""
     if main_link:
-        back_btn = f'<a href="{main_link}" class="back-btn">&larr; Back to Main Dashboard</a>'
+        back_btn = f'<a href="{main_link}" class="back-btn">Back to Main Dashboard</a>'
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -132,7 +132,8 @@ def generate_level_html(results_data: list, output_path: str, summary_stats: dic
         .back-btn:hover {{ background: #38bdf8; color: #0f172a; }}
         .header {{ background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid #334155; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }}
         .header h1 {{ color: #38bdf8; margin: 0 0 0.5rem; font-size: 1.5rem; }}
-        .header-meta {{ color: #94a3b8; font-size: 0.875rem; }}
+        .header-meta {{ display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }}
+        .header-tag {{ display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; border: 1px solid #475569; color: #94a3b8; }}
         .stats-row {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }}
         .stat-card {{ background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 1.25rem; text-align: center; }}
         .stat-card .value {{ font-size: 2rem; font-weight: bold; color: #38bdf8; }}
@@ -159,7 +160,9 @@ def generate_level_html(results_data: list, output_path: str, summary_stats: dic
         <div class="header">
             <h1>{title}</h1>
             <div class="header-meta">
-                DeepEval (G-Eval) &bull; Groq <code>openai/gpt-oss-120b</code> &bull; {datetime.now().strftime('%B %d, %Y at %H:%M:%S')}
+                <span class="header-tag">DeepEval (G-Eval)</span>
+                <span class="header-tag">Groq &middot; openai/gpt-oss-120b</span>
+                <span class="header-tag">{datetime.now().strftime('%B %d, %Y at %H:%M:%S')}</span>
             </div>
         </div>
 
