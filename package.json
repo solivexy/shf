@@ -1,0 +1,12 @@
+{
+  "name": "shf",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Run frontend and backend concurrently",
+  "scripts": {
+    "dev": "bunx concurrently -c \"blue,green\" -n \"FRONTEND,BACKEND\" \"bun run dev:frontend\" \"bun run dev:backend\"",
+    "dev:frontend": "cd frontend && bun run dev",
+    "dev:backend": "cd backend && python main.py"
+  }
+}
+ 
